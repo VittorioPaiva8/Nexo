@@ -104,6 +104,8 @@ Segredos do repositório (Settings → Secrets and variables → Actions):
 
 Requisitos: plano Workers Paid na Cloudflare (necessário para Containers). O container desliga após 15 minutos sem uso; o primeiro acesso depois disso leva alguns segundos.
 
+As tabelas ficam no schema `nexo` do PostgreSQL, então o Nexo pode usar um projeto do Supabase que já tenha outras tabelas, sem misturar com elas.
+
 Antes do uso real: troque as senhas dos usuários do seed, defina a variável `SEED_AO_PUBLICAR=false` e configure o backup do banco.
 
 ## Identidade visual

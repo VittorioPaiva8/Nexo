@@ -21,7 +21,7 @@ export async function criarApp(): Promise<{ app: INestApplication; prisma: Prism
 /** Limpa o banco de testes e cria setores, tipo e usuários básicos. */
 export async function prepararBanco(prisma: PrismaService) {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE "Mensagem", "Atribuicao", "Divergencia", "NotaFiscal", "Importacao", "Usuario", "TipoDivergencia", "Setor" RESTART IDENTITY CASCADE',
+    'TRUNCATE nexo."Mensagem", nexo."Atribuicao", nexo."Divergencia", nexo."NotaFiscal", nexo."Importacao", nexo."Usuario", nexo."TipoDivergencia", nexo."Setor" RESTART IDENTITY CASCADE',
   );
   const senhaHash = await bcrypt.hash('senha123', 4);
   const fiscal = await prisma.setor.create({ data: { nome: 'Fiscal' } });

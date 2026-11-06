@@ -7,26 +7,34 @@ generator client {
   moduleFormat = "esm"
 }
 
+// Todas as tabelas ficam no schema "nexo", para o banco poder ser compartilhado com outros sistemas.
 datasource db {
   provider = "postgresql"
+  schemas  = ["nexo"]
 }
 
 enum Perfil {
   ADMIN
   REVISOR
   RESPONSAVEL
+
+  @@schema("nexo")
 }
 
 enum StatusNota {
   IMPORTADA // sem pendência aberta
   EM_AJUSTE // possui ao menos uma divergência não resolvida
   AJUSTADA // teve divergências e todas foram resolvidas
+
+  @@schema("nexo")
 }
 
 enum StatusDivergencia {
   PENDENTE // com o responsável, aguardando retorno
   AGUARDANDO_REVISAO // responsável respondeu; aguardando o solicitante aceitar ou devolver
   RESOLVIDA
+
+  @@schema("nexo")
 }
 
 enum TipoMensagem {
@@ -36,11 +44,15 @@ enum TipoMensagem {
   REPASSE
   DEVOLUCAO
   ACEITE
+
+  @@schema("nexo")
 }
 
 enum MotivoFimAtribuicao {
   RESPONDIDA
   REPASSADA
+
+  @@schema("nexo")
 }
 
 model Setor {
@@ -50,6 +62,8 @@ model Setor {
   criadoEm    DateTime     @default(now())
   usuarios    Usuario[]
   atribuicoes Atribuicao[]
+
+  @@schema("nexo")
 }
 
 model Usuario {
@@ -67,6 +81,8 @@ model Usuario {
   pendentes   Divergencia[] @relation("ResponsavelAtual")
   atribuicoes Atribuicao[]
   mensagens   Mensagem[]
+
+  @@schema("nexo")
 }
 
 model Importacao {
@@ -79,6 +95,8 @@ model Importacao {
   totalDuplicadas Int
   totalInvalidas  Int
   notas           NotaFiscal[]
+
+  @@schema("nexo")
 }
 
 model NotaFiscal {
@@ -103,6 +121,7 @@ model NotaFiscal {
 
   @@index([status])
   @@index([emitenteCnpj])
+  @@schema("nexo")
 }
 
 model TipoDivergencia {
@@ -110,6 +129,8 @@ model TipoDivergencia {
   nome         String        @unique
   ativo        Boolean       @default(true)
   divergencias Divergencia[]
+
+  @@schema("nexo")
 }
 
 model Divergencia {
@@ -132,6 +153,7 @@ model Divergencia {
   @@index([status])
   @@index([responsavelAtualId, status])
   @@index([solicitanteId, status])
+  @@schema("nexo")
 }
 
 // Cada período em que a divergência ficou com um responsável.
@@ -151,6 +173,7 @@ model Atribuicao {
   @@index([divergenciaId])
   @@index([setorId])
   @@index([responsavelId])
+  @@schema("nexo")
 }
 
 model Mensagem {
@@ -164,4 +187,5 @@ model Mensagem {
   criadaEm      DateTime     @default(now())
 
   @@index([divergenciaId])
+  @@schema("nexo")
 }
