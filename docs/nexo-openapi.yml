@@ -9,10 +9,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginDto"
+              $ref: '#/components/schemas/LoginDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       summary: Entra no sistema e devolve o token JWT
       tags:
         - Autenticação
@@ -21,8 +21,8 @@ paths:
       operationId: AuthController_me
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Dados do usuário logado
@@ -60,8 +60,8 @@ paths:
           schema:
             type: boolean
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Lista usuários (usado para escolher o responsável)
@@ -75,10 +75,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CriarUsuarioDto"
+              $ref: '#/components/schemas/CriarUsuarioDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       summary: Cria um usuário
@@ -98,10 +98,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AtualizarUsuarioDto"
+              $ref: '#/components/schemas/AtualizarUsuarioDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Atualiza ou desativa um usuário
@@ -112,8 +112,8 @@ paths:
       operationId: SetoresController_listar
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Lista os setores
@@ -127,10 +127,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CriarSetorDto"
+              $ref: '#/components/schemas/CriarSetorDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       summary: Cria um setor
@@ -150,10 +150,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AtualizarSetorDto"
+              $ref: '#/components/schemas/AtualizarSetorDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Atualiza ou desativa um setor
@@ -164,8 +164,8 @@ paths:
       operationId: TiposDivergenciaController_listar
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Lista os tipos de divergência
@@ -179,10 +179,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CriarTipoDivergenciaDto"
+              $ref: '#/components/schemas/CriarTipoDivergenciaDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       summary: Cria um tipo de divergência
@@ -202,10 +202,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AtualizarTipoDivergenciaDto"
+              $ref: '#/components/schemas/AtualizarTipoDivergenciaDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Atualiza ou desativa um tipo de divergência
@@ -230,8 +230,8 @@ paths:
                     type: string
                     format: binary
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       summary: Importa XMLs de NF-e (até 500 arquivos de 5 MB por envio)
@@ -277,8 +277,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Lista as notas importadas (paginado)
@@ -294,8 +294,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Detalhe da nota com suas divergências
@@ -311,8 +311,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Baixa o XML original da nota
@@ -323,8 +323,8 @@ paths:
       operationId: NotificacoesController_minhas
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Últimos avisos do usuário logado e total não lido
@@ -335,8 +335,8 @@ paths:
       operationId: NotificacoesController_marcarLidas
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Marca os avisos do usuário como lidos
@@ -347,8 +347,8 @@ paths:
       operationId: NotificacoesController_configuracoes
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Preferências de disparo de avisos
@@ -368,10 +368,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConfigurarAvisoDto"
+              $ref: '#/components/schemas/ConfigurarAvisoDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Liga ou desliga um tipo de aviso
@@ -386,10 +386,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CriarDivergenciaDto"
+              $ref: '#/components/schemas/CriarDivergenciaDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       summary: Cadastra a divergência (nota manual ou notas importadas), gera
@@ -478,8 +478,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Central de divergências, fila do responsável ou fila de validação
@@ -490,8 +490,8 @@ paths:
       operationId: DivergenciasController_contadores
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Totais da central (pendentes, devolvidas, vencidas) e da fila do usuário
@@ -507,8 +507,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Detalhe com nota, histórico de movimentações, anexos e tempo por
@@ -525,8 +525,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Responsável assume a tratativa (Pendente → Em tratamento)
@@ -546,10 +546,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RascunhoDto"
+              $ref: '#/components/schemas/RascunhoDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Salva o rascunho da devolutiva sem mudar o status
@@ -598,8 +598,8 @@ paths:
                     type: string
                     format: binary
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Responsável descreve a ação realizada, anexa evidências e devolve ao
@@ -620,10 +620,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConcluirDto"
+              $ref: '#/components/schemas/ConcluirDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Fiscal valida a correção, registra o parecer e conclui
@@ -643,10 +643,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ReabrirDto"
+              $ref: '#/components/schemas/ReabrirDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Fiscal reabre com motivo; volta ao responsável mantendo o histórico e o
@@ -667,10 +667,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RedistribuirDto"
+              $ref: '#/components/schemas/RedistribuirDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Encaminha para outro responsável ou setor
@@ -700,8 +700,8 @@ paths:
                     type: string
                     format: binary
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       summary: Anexa documentos (XML, PDF, JPG, PNG; até 5 de 10 MB)
@@ -717,8 +717,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Baixa um anexo
@@ -754,8 +754,8 @@ paths:
                     - ALTA
                     - CRITICA
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       summary: Confere o CSV (obrigatórios, CNPJ, chave, cadastros e duplicidades) sem
@@ -792,8 +792,8 @@ paths:
                     - ALTA
                     - CRITICA
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       summary: Importa as linhas válidas do CSV e distribui as tratativas
@@ -828,12 +828,12 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
-      summary: "Relatórios e SLA: motivos, SLA e tempo por setor, idade da fila,
-        reincidência por fornecedor"
+      summary: 'Relatórios e SLA: motivos, SLA e tempo por setor, idade da fila,
+        reincidência por fornecedor'
       tags:
         - Indicadores
   /metricas/painel:
@@ -841,19 +841,19 @@ paths:
       operationId: MetricasController_painel
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
-      summary: "Painel geral: fila atual, pendências que exigem atenção, volume e SLA"
+      summary: 'Painel geral: fila atual, pendências que exigem atenção, volume e SLA'
       tags:
         - Indicadores
 info:
   title: Nexo — NF-es divergentes
-  description: "API do Nexo: importação de NF-es, marcação de divergências,
+  description: 'API do Nexo: importação de NF-es, marcação de divergências,
     encaminhamento a responsáveis, retorno com justificativa/correção e métricas
     de tempo por setor e responsável. Respostas no envelope { data }, { data,
-    meta } (listas) ou { error }."
+    meta } (listas) ou { error }.'
   version: 0.1.0
   contact: {}
 tags: []
@@ -989,10 +989,10 @@ components:
       properties:
         numero:
           type: string
-          example: "000125"
+          example: '000125'
         serie:
           type: string
-          example: "1"
+          example: '1'
         chaveAcesso:
           type: string
           description: 44 dígitos, quando for NF-e
@@ -1004,7 +1004,7 @@ components:
           example: 11.222.333/0001-81
         valorTotal:
           type: string
-          example: "10500.00"
+          example: '10500.00'
           description: Valor total da NF
         dataEmissao:
           type: string
@@ -1020,7 +1020,7 @@ components:
           example: Cascavel
         centroCusto:
           type: string
-          example: "26.30"
+          example: '26.30'
       required:
         - numero
         - serie
@@ -1039,7 +1039,7 @@ components:
         nota:
           description: Cadastro manual da nota
           allOf:
-            - $ref: "#/components/schemas/NotaManualDto"
+            - $ref: '#/components/schemas/NotaManualDto'
         tipoId:
           type: number
         setorId:
