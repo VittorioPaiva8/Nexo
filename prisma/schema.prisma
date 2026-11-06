@@ -1,0 +1,167 @@
+// Modelagem do Nexo — controle de NF-es divergentes.
+// Padrão ITAX: modelos e campos em português, sem acento; alterações só por migração.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Perfil {
+  ADMIN
+  REVISOR
+  RESPONSAVEL
+}
+
+enum StatusNota {
+  IMPORTADA // sem pendência aberta
+  EM_AJUSTE // possui ao menos uma divergência não resolvida
+  AJUSTADA // teve divergências e todas foram resolvidas
+}
+
+enum StatusDivergencia {
+  PENDENTE // com o responsável, aguardando retorno
+  AGUARDANDO_REVISAO // responsável respondeu; aguardando o solicitante aceitar ou devolver
+  RESOLVIDA
+}
+
+enum TipoMensagem {
+  SOLICITACAO
+  JUSTIFICATIVA
+  CORRECAO
+  REPASSE
+  DEVOLUCAO
+  ACEITE
+}
+
+enum MotivoFimAtribuicao {
+  RESPONDIDA
+  REPASSADA
+}
+
+model Setor {
+  id          Int          @id @default(autoincrement())
+  nome        String       @unique
+  ativo       Boolean      @default(true)
+  criadoEm    DateTime     @default(now())
+  usuarios    Usuario[]
+  atribuicoes Atribuicao[]
+}
+
+model Usuario {
+  id          Int           @id @default(autoincrement())
+  nome        String
+  email       String        @unique
+  senhaHash   String
+  perfil      Perfil        @default(RESPONSAVEL)
+  ativo       Boolean       @default(true)
+  setorId     Int?
+  setor       Setor?        @relation(fields: [setorId], references: [id])
+  criadoEm    DateTime      @default(now())
+  importacoes Importacao[]
+  solicitadas Divergencia[] @relation("Solicitante")
+  pendentes   Divergencia[] @relation("ResponsavelAtual")
+  atribuicoes Atribuicao[]
+  mensagens   Mensagem[]
+}
+
+model Importacao {
+  id              Int          @id @default(autoincrement())
+  usuarioId       Int
+  usuario         Usuario      @relation(fields: [usuarioId], references: [id])
+  criadaEm        DateTime     @default(now())
+  totalArquivos   Int
+  totalImportadas Int
+  totalDuplicadas Int
+  totalInvalidas  Int
+  notas           NotaFiscal[]
+}
+
+model NotaFiscal {
+  id               Int           @id @default(autoincrement())
+  chaveAcesso      String        @unique @db.Char(44)
+  numero           String
+  serie            String
+  modelo           String
+  dataEmissao      DateTime
+  emitenteCnpj     String
+  emitenteNome     String
+  destinatarioDoc  String?
+  destinatarioNome String?
+  valorTotal       Decimal       @db.Decimal(15, 2)
+  naturezaOperacao String?
+  xml              String
+  status           StatusNota    @default(IMPORTADA)
+  importacaoId     Int
+  importacao       Importacao    @relation(fields: [importacaoId], references: [id])
+  criadaEm         DateTime      @default(now())
+  divergencias     Divergencia[]
+
+  @@index([status])
+  @@index([emitenteCnpj])
+}
+
+model TipoDivergencia {
+  id           Int           @id @default(autoincrement())
+  nome         String        @unique
+  ativo        Boolean       @default(true)
+  divergencias Divergencia[]
+}
+
+model Divergencia {
+  id                 Int               @id @default(autoincrement())
+  notaFiscalId       Int
+  notaFiscal         NotaFiscal        @relation(fields: [notaFiscalId], references: [id])
+  tipoId             Int
+  tipo               TipoDivergencia   @relation(fields: [tipoId], references: [id])
+  descricao          String
+  status             StatusDivergencia @default(PENDENTE)
+  solicitanteId      Int
+  solicitante        Usuario           @relation("Solicitante", fields: [solicitanteId], references: [id])
+  responsavelAtualId Int?
+  responsavelAtual   Usuario?          @relation("ResponsavelAtual", fields: [responsavelAtualId], references: [id])
+  abertaEm           DateTime          @default(now())
+  resolvidaEm        DateTime?
+  atribuicoes        Atribuicao[]
+  mensagens          Mensagem[]
+
+  @@index([status])
+  @@index([responsavelAtualId, status])
+  @@index([solicitanteId, status])
+}
+
+// Cada período em que a divergência ficou com um responsável.
+// A soma dos períodos dá o tempo por pessoa e por setor.
+model Atribuicao {
+  id            Int                  @id @default(autoincrement())
+  divergenciaId Int
+  divergencia   Divergencia          @relation(fields: [divergenciaId], references: [id])
+  responsavelId Int
+  responsavel   Usuario              @relation(fields: [responsavelId], references: [id])
+  setorId       Int?
+  setor         Setor?               @relation(fields: [setorId], references: [id])
+  inicio        DateTime             @default(now())
+  fim           DateTime?
+  motivoFim     MotivoFimAtribuicao?
+
+  @@index([divergenciaId])
+  @@index([setorId])
+  @@index([responsavelId])
+}
+
+model Mensagem {
+  id            Int          @id @default(autoincrement())
+  divergenciaId Int
+  divergencia   Divergencia  @relation(fields: [divergenciaId], references: [id])
+  autorId       Int
+  autor         Usuario      @relation(fields: [autorId], references: [id])
+  tipo          TipoMensagem
+  texto         String
+  criadaEm      DateTime     @default(now())
+
+  @@index([divergenciaId])
+}

@@ -1,0 +1,21 @@
+body {
+  background: #f5f5f5;
+}
+
+h1,
+h2 {
+  letter-spacing: -1px;
+}
+
+/* Fundo da tela de login: preto com degradê vermelho no canto inferior esquerdo (manual 5.1). */
+.fundo-login {
+  min-height: 100dvh;
+  background:
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(228, 11, 24, 0.55) 0%,
+      rgba(121, 6, 14, 0.35) 25%,
+      transparent 55%
+    ),
+    #000000;
+}
