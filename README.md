@@ -98,25 +98,25 @@ Usuários do seed (senha `nexo123`, ou o valor de `SEED_SENHA`): `admin@`, `fisc
 - [ ] Mudança no banco feita por migração Prisma
 - [ ] Mudança de endpoint refletida em `docs/nexo-openapi.yml` (`npm run openapi`)
 
-## Publicação (ambiente de teste)
+## Publicação (ambiente de teste, plano gratuito)
 
-O ambiente de teste roda no **Cloudflare**, num único endereço: o frontend é servido como arquivos estáticos e a API roda em **Cloudflare Containers**, acessada em `/api`. O banco é um PostgreSQL gratuito no **Neon** (o Supabase também funciona, com a conexão do Session pooler). Isso é uma exceção ao guia ITAX (que prevê Fly.io para API e banco), aprovada só para o teste. O `Dockerfile` é o mesmo nos dois casos.
+Tudo gratuito e só para teste (exceção ao guia ITAX, que prevê Fly.io):
 
-O workflow `.github/workflows/publicar.yml` roda a cada push na `main` (ou manualmente em Actions → Publicar): aplica as migrações no banco, carrega o seed, gera o frontend e publica com `wrangler deploy` (`wrangler.jsonc` e `cloudflare/worker.ts`).
+- **Banco:** PostgreSQL no **Neon**. As tabelas ficam no schema `nexo`.
+- **API:** **Render**, plano free, pelo `render.yaml` e `Dockerfile.render`. A cada deploy o container aplica as migrações e o seed antes de ligar a API. Sem uso por 15 minutos ela dorme, e o primeiro acesso depois disso leva cerca de 1 minuto.
+- **Frontend:** **Cloudflare Pages**, plano free, ligado direto ao GitHub. O `web/public/_redirects` faz as rotas da SPA funcionarem.
 
-Segredos do repositório (Settings → Secrets and variables → Actions):
+Passo a passo (uma vez só):
 
-| Nome                    | Onde conseguir                                                                                       |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Cloudflare → My Profile → API Tokens → modelo _Edit Cloudflare Workers_                              |
-| `CLOUDFLARE_ACCOUNT_ID` | Painel da Cloudflare, na página inicial da conta                                                     |
-| `DATABASE_URL`          | Neon → projeto → Connect, com _Connection pooling_ desligado (conexão direta, com `sslmode=require`) |
+1. **Render** → New → Blueprint → escolha este repositório. Preencha `DATABASE_URL` com a conexão do Neon (_Connection pooling_ desligado, com `sslmode=require`) e deixe `CORS_ORIGIN` em branco por enquanto. Anote o endereço da API (`https://nexo-api-xxxx.onrender.com`).
+2. **Cloudflare** → Workers & Pages → Create → Pages → Connect to Git → este repositório, branch `main`. Diretório raiz `web`, comando `npm ci && npm run build`, saída `dist`. Em variáveis de ambiente, crie `VITE_API_URL` com o endereço da API.
+3. Volte ao Render e preencha `CORS_ORIGIN` com o endereço do Pages (`https://nexo-xxxx.pages.dev`).
 
-Requisitos: plano Workers Paid na Cloudflare (necessário para Containers). O container desliga após 15 minutos sem uso; o primeiro acesso depois disso leva alguns segundos.
+Depois disso, cada merge na `main` publica a API e o site sozinhos.
 
-As tabelas ficam no schema `nexo` do PostgreSQL, então o Nexo pode usar um banco que já tenha outras tabelas, sem misturar com elas.
+O workflow `publicar.yml` (Cloudflare Workers + Containers, plano pago) continua no repositório, mas só roda manualmente.
 
-Antes do uso real: troque as senhas dos usuários do seed, defina a variável `SEED_AO_PUBLICAR=false` e configure o backup do banco.
+Antes do uso real: troque as senhas dos usuários do seed, defina `SEED_DEMO=false` e configure o backup do banco.
 
 ## Identidade visual
 

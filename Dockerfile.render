@@ -1,0 +1,15 @@
+# API do Nexo no Render (plano gratuito, só para teste).
+# No plano gratuito o Render não roda comando antes do deploy, então as migrações
+# e os dados iniciais rodam ao ligar o container (o seed não duplica dados).
+FROM node:24-slim
+WORKDIR /app
+ENV NODE_ENV=production
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm ci --include=dev
+COPY tsconfig.json tsconfig.build.json ./
+COPY src ./src
+RUN npm run build
+EXPOSE 3000
+CMD ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts && node dist/main.js"]

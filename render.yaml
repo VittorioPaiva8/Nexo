@@ -1,0 +1,25 @@
+# Blueprint do Render (plano gratuito) para a API do Nexo, só para o ambiente de teste.
+# No Render: New → Blueprint → escolha este repositório. Ele pede o DATABASE_URL (Neon)
+# e o CORS_ORIGIN (endereço do site no Cloudflare Pages).
+services:
+  - type: web
+    name: nexo-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./Dockerfile.render
+    healthCheckPath: /docs
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: SEED_DEMO
+        value: 'true'
+      - key: PORT
+        value: '3000'
