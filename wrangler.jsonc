@@ -1,10 +1,11 @@
-// Publicação do Nexo no Cloudflare: frontend (arquivos estáticos) + API em container, num único endereço.
+// Publicação do Nexo no Cloudflare Workers (plano gratuito): frontend (arquivos estáticos) + API, num único endereço.
 // Exceção ao guia ITAX aprovada para o ambiente de teste (o guia prevê Fly.io para a API e o banco).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "nexo",
   "main": "cloudflare/worker.ts",
   "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "assets": {
     "directory": "./web/dist",
@@ -12,16 +13,13 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api", "/api/*"],
   },
-  "containers": [
-    {
-      "class_name": "NexoApi",
-      "image": "./Dockerfile",
-      "instance_type": "basic",
-      "max_instances": 2,
-    },
-  ],
-  "durable_objects": {
-    "bindings": [{ "name": "NEXO_API", "class_name": "NexoApi" }],
+  // A API reaproveita os services do NestJS sem o framework: os pacotes do Nest viram substitutos
+  // mínimos e o cliente do Prisma é a versão gerada para o Workers.
+  "alias": {
+    "@nestjs/common": "./cloudflare/stubs/nest-common.ts",
+    "@nestjs/swagger": "./cloudflare/stubs/nest-swagger.ts",
+    "../generated/prisma/client.js": "./src/generated/prisma-worker/client.ts",
+    "../generated/prisma/enums.js": "./src/generated/prisma-worker/enums.ts",
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NexoApi"] }],
+  "vars": { "JWT_EXPIRES_IN": "8h" },
 }

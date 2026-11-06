@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Paginado } from '../common/envelope.interceptor.js';
+import { Paginado } from '../common/paginado.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { ArquivoRecebido } from '../anexos/arquivos.js';

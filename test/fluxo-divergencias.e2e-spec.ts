@@ -23,7 +23,8 @@ describe('Fluxo Fiscal de divergências (e2e)', () => {
   let prisma: PrismaService;
   let dados: Awaited<ReturnType<typeof prepararBanco>>;
   const t: Record<string, string> = {};
-  const http = () => request(app.getHttpServer());
+  // Com E2E_URL (ex.: http://127.0.0.1:8787/api) os mesmos testes rodam contra a API do Worker.
+  const http = () => request(process.env['E2E_URL'] ?? app.getHttpServer());
   const como = (quem: string) => ({ Authorization: `Bearer ${t[quem]}` });
 
   async function login(email: string) {

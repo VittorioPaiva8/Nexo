@@ -8,7 +8,7 @@ import {
 import { prepararAnexos, type ArquivoRecebido } from '../anexos/arquivos.js';
 import { dataDoDia, fimDoPrazo, hojeBrasilia, horasEntre, somarDias } from '../common/datas.js';
 import { apenasDigitos, normalizarNumero } from '../common/documentos.js';
-import { Paginado } from '../common/envelope.interceptor.js';
+import { Paginado } from '../common/paginado.js';
 import type { UsuarioAutenticado } from '../common/usuario-atual.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import type {

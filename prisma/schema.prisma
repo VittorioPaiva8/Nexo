@@ -7,6 +7,14 @@ generator client {
   moduleFormat = "esm"
 }
 
+// Mesmo cliente, gerado para o Cloudflare Workers (carrega o WASM do Prisma como módulo).
+generator worker {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma-worker"
+  moduleFormat = "esm"
+  runtime      = "cloudflare"
+}
+
 // Todas as tabelas ficam no schema "nexo", para o banco poder ser compartilhado com outros sistemas.
 datasource db {
   provider = "postgresql"

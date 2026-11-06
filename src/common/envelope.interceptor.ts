@@ -1,13 +1,8 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
+import { Paginado } from './paginado.js';
 
-/** Resultado paginado devolvido pelos services; vira o envelope { data, meta }. */
-export class Paginado<T> {
-  constructor(
-    public readonly itens: T[],
-    public readonly meta: { pagina: number; porPagina: number; total: number },
-  ) {}
-}
+export { Paginado };
 
 /** Envolve toda resposta de sucesso no envelope padrão ITAX: { data } ou { data, meta }. */
 @Injectable()

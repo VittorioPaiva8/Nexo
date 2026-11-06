@@ -98,18 +98,28 @@ Usuários do seed (senha `nexo123`, ou o valor de `SEED_SENHA`): `admin@`, `fisc
 - [ ] Mudança no banco feita por migração Prisma
 - [ ] Mudança de endpoint refletida em `docs/nexo-openapi.yml` (`npm run openapi`)
 
-## Publicação (ambiente de teste, plano gratuito)
+## Publicação (ambiente de teste, Cloudflare gratuito)
 
-Tudo gratuito e só para teste (exceção ao guia ITAX, que prevê Fly.io):
+Tudo no plano gratuito do **Cloudflare Workers**, num único endereço, com o banco PostgreSQL no **Neon** (schema `nexo`). Exceção ao guia ITAX aprovada só para o teste (o guia prevê Fly.io).
 
-- **Banco:** PostgreSQL no **Neon**. As tabelas ficam no schema `nexo`.
-- **Site e API:** um único serviço no **Render**, plano free (`render.yaml` e `Dockerfile.render`). A API responde em `/api` e o frontend no mesmo endereço (variável `SITE_DIR`). A cada deploy o container aplica as migrações e o seed antes de ligar. Sem uso por 15 minutos o serviço dorme, e o primeiro acesso depois disso leva cerca de 1 minuto.
+- **Site:** os arquivos de `web/dist` são servidos pelo próprio Cloudflare, como SPA.
+- **API:** `cloudflare/api.ts`, em `/api`. Usa os mesmos services, DTOs e validações da API NestJS (`src/`), trocando só a camada HTTP (Hono), o JWT (Web Crypto) e o cliente do Prisma gerado para o Workers (`src/generated/prisma-worker`). Os pacotes do Nest viram substitutos mínimos (`cloudflare/stubs/`) pelo `alias` do `wrangler.jsonc`.
+- **Senhas:** PBKDF2-SHA256 (`src/common/senha.ts`), que roda igual no Node e no Workers.
+- **Testes:** a mesma bateria e2e roda contra a API NestJS e contra o Worker (`E2E_URL=http://127.0.0.1:8787/api npm run test:e2e`, com `npx wrangler dev` e um `.dev.vars` local). O CI faz os dois.
 
-Para ligar (uma vez só): **Render** → New → Blueprint → escolha este repositório e preencha `DATABASE_URL` com a conexão do Neon (_Connection pooling_ desligado, com `sslmode=require`). O `JWT_SECRET` é gerado pelo Render. Depois disso, cada merge na `main` publica de novo sozinho.
+O workflow `.github/workflows/publicar.yml` roda a cada push na `main`: aplica as migrações no Neon, carrega o seed (com `SEED_DEMO`), gera o frontend e publica com `wrangler deploy`. Na primeira vez ele cria o `JWT_SECRET` do Worker.
 
-O workflow `publicar.yml` (Cloudflare Workers + Containers, plano pago) continua no repositório, mas só roda manualmente.
+Segredos do repositório (Settings → Secrets and variables → Actions):
 
-Antes do uso real: troque as senhas dos usuários do seed, defina `SEED_DEMO=false` e configure o backup do banco.
+| Nome                    | Onde conseguir                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare → My Profile → API Tokens → modelo _Edit Cloudflare Workers_                              |
+| `CLOUDFLARE_ACCOUNT_ID` | Painel da Cloudflare, na lateral da página inicial da conta                                          |
+| `DATABASE_URL`          | Neon → projeto → Connect, com _Connection pooling_ desligado (conexão direta, com `sslmode=require`) |
+
+Limite do plano gratuito: 100 mil requisições por dia e pouco tempo de CPU por requisição. Numa medição local as rotas usaram de 4 a 8 ms de CPU com os dados de teste, perto do limite de 10 ms. Importações grandes (centenas de XMLs de uma vez) podem passar dele. Se isso acontecer, o plano Workers Paid resolve sem mudar código.
+
+Antes do uso real: troque as senhas dos usuários do seed, defina `SEED_DEMO=false` (variável do repositório) e configure o backup do banco.
 
 ## Identidade visual
 

@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import bcrypt from 'bcrypt';
+import { conferirSenha } from '../common/senha.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { usuarioPublico } from '../usuarios/usuario-publico.js';
 
@@ -16,7 +16,7 @@ export class AuthService {
       where: { email: email.toLowerCase() },
       include: { setor: true },
     });
-    if (!usuario || !usuario.ativo || !(await bcrypt.compare(senha, usuario.senhaHash))) {
+    if (!usuario || !usuario.ativo || !(await conferirSenha(senha, usuario.senhaHash))) {
       throw new UnauthorizedException('E-mail ou senha inválidos');
     }
     const token = await this.jwt.signAsync({ sub: usuario.id, perfil: usuario.perfil });
