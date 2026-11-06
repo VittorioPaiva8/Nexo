@@ -88,24 +88,23 @@ Usuários do seed (senha `nexo123`, ou o valor de `SEED_SENHA`): `admin@nexo.loc
 - [ ] Mudança no banco feita por migração Prisma
 - [ ] Mudança de endpoint refletida em `docs/nexo-openapi.yml` (`npm run openapi`)
 
-## Publicação
+## Publicação (ambiente de teste)
 
-O workflow `.github/workflows/publicar.yml` publica a cada push na `main` (ou manualmente, em Actions → Publicar):
+O ambiente de teste roda no **Cloudflare**, num único endereço: o frontend é servido como arquivos estáticos e a API roda em **Cloudflare Containers**, acessada em `/api`. O banco é um PostgreSQL gratuito no **Neon**. Isso é uma exceção ao guia ITAX (que prevê Fly.io para API e banco), aprovada só para o teste. O `Dockerfile` é o mesmo nos dois casos.
 
-- **API** no Fly.io, região GRU, com PostgreSQL no Fly.io. Na primeira execução ele cria o app, o banco e os segredos (`DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`). As migrações rodam antes de cada versão (`scripts/release.sh`).
-- **Frontend** no Cloudflare Pages, apontando para `https://<FLY_APP>.fly.dev`.
+O workflow `.github/workflows/publicar.yml` roda a cada push na `main` (ou manualmente em Actions → Publicar): aplica as migrações no Neon, carrega o seed, gera o frontend e publica com `wrangler deploy` (`wrangler.jsonc` e `cloudflare/worker.ts`).
 
-Configure em Settings → Secrets and variables → Actions do repositório:
+Segredos do repositório (Settings → Secrets and variables → Actions):
 
-| Nome                    | Tipo     | Onde conseguir                                                           |
-| ----------------------- | -------- | ------------------------------------------------------------------------ |
-| `FLY_API_TOKEN`         | Secret   | `fly tokens create org` ou fly.io → Account → Access Tokens              |
-| `CLOUDFLARE_API_TOKEN`  | Secret   | Cloudflare → My Profile → API Tokens, permissão _Cloudflare Pages: Edit_ |
-| `CLOUDFLARE_ACCOUNT_ID` | Secret   | Painel da Cloudflare, na barra lateral da conta                          |
-| `FLY_APP`               | Variable | Opcional; nome do app (padrão `nexo-itax`), precisa ser único no Fly.io  |
-| `PAGES_PROJECT`         | Variable | Opcional; nome do projeto no Pages (padrão `nexo-itax`)                  |
+| Nome                    | Onde conseguir                                                                                              |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare → My Profile → API Tokens → modelo _Edit Cloudflare Workers_                                     |
+| `CLOUDFLARE_ACCOUNT_ID` | Painel da Cloudflare, na página inicial da conta                                                            |
+| `DATABASE_URL`          | Neon → projeto → Connect, com _Connection pooling_ desligado (conexão direta, termina em `sslmode=require`) |
 
-O ambiente de teste já sobe com os usuários do seed (`SEED_AO_PUBLICAR=true`). Antes do uso real, troque as senhas e remova esse segredo com `fly secrets unset SEED_AO_PUBLICAR`, e configure o backup do banco.
+Requisitos: plano Workers Paid na Cloudflare (necessário para Containers). O container desliga após 15 minutos sem uso; o primeiro acesso depois disso leva alguns segundos.
+
+Antes do uso real: troque as senhas dos usuários do seed, defina a variável `SEED_AO_PUBLICAR=false` e configure o backup do banco.
 
 ## Identidade visual
 

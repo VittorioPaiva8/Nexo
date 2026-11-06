@@ -48,6 +48,8 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@cloudflare/containers": "^0.3.7",
+    "@cloudflare/workers-types": "^5.20261106.1",
     "@nestjs/cli": "^12.0.12",
     "@nestjs/testing": "^12.4.0",
     "@swc/core": "^1.16.22",
@@ -66,6 +68,7 @@
     "typescript": "^6.0.3",
     "unplugin-swc": "^2.0.0",
     "vitest": "^4.1.12",
+    "wrangler": "^4.158.0",
     "yaml": "^2.9.1"
   }
 }

@@ -1,3 +1,4 @@
+// VITE_API_URL pode ser absoluto (http://localhost:3000) ou relativo ao site (/api, como no Cloudflare).
 const BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 const CHAVE_TOKEN = 'nexo.token';
 
@@ -25,7 +26,7 @@ export function registrarAoExpirar(fn: () => void) {
 type Query = Record<string, string | number | boolean | undefined | null>;
 
 function montarUrl(caminho: string, query?: Query) {
-  const url = new URL(BASE + caminho);
+  const url = new URL(BASE + caminho, window.location.origin);
   for (const [k, v] of Object.entries(query ?? {})) {
     if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
   }

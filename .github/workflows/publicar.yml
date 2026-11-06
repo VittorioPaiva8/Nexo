@@ -1,8 +1,10 @@
 name: Publicar
 
-# Publica a API no Fly.io (GRU) e o frontend no Cloudflare Pages, conforme o guia ITAX.
-# Segredos do repositório: FLY_API_TOKEN, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
-# Variáveis opcionais: FLY_APP (padrão nexo-itax) e PAGES_PROJECT (padrão nexo-itax).
+# Ambiente de teste no Cloudflare: frontend (arquivos estáticos) + API em Cloudflare Containers,
+# com PostgreSQL no Neon. Exceção ao guia ITAX aprovada para o teste (o guia prevê Fly.io).
+#
+# Segredos do repositório (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, DATABASE_URL (conexão direta do Neon)
 
 on:
   push:
@@ -11,62 +13,52 @@ on:
 
 concurrency: publicar
 
-env:
-  FLY_APP: ${{ vars.FLY_APP || 'nexo-itax' }}
-  PAGES_PROJECT: ${{ vars.PAGES_PROJECT || 'nexo-itax' }}
-
 jobs:
-  api:
+  publicar:
     runs-on: ubuntu-latest
     env:
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      # Idempotente: só cria o que ainda não existe.
-      - name: Preparar app, banco e segredos
-        run: |
-          set -e
-          if ! flyctl status --app "$FLY_APP" >/dev/null 2>&1; then
-            flyctl apps create "$FLY_APP"
-          fi
-          if ! flyctl secrets list --app "$FLY_APP" | grep -q DATABASE_URL; then
-            flyctl postgres create --name "$FLY_APP-db" --region gru --initial-cluster-size 1 \
-              --vm-size shared-cpu-1x --volume-size 1 || true
-            flyctl postgres attach "$FLY_APP-db" --app "$FLY_APP"
-          fi
-          if ! flyctl secrets list --app "$FLY_APP" | grep -q JWT_SECRET; then
-            flyctl secrets set --stage --app "$FLY_APP" \
-              JWT_SECRET="$(openssl rand -hex 32)" \
-              CORS_ORIGIN="https://$PAGES_PROJECT.pages.dev" \
-              SEED_AO_PUBLICAR=true
-          fi
-
-      - name: Publicar a API
-        run: flyctl deploy --app "$FLY_APP" --remote-only --primary-region gru
-
-  web:
-    needs: api
-    runs-on: ubuntu-latest
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+
+      - name: Conferir segredos
+        run: |
+          for s in DATABASE_URL CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
+            if [ -z "${!s}" ]; then echo "::error::Falta o segredo $s no repositório"; exit 1; fi
+          done
+
+      - run: npm ci
       - run: npm ci
         working-directory: web
-      - run: npm run build
+
+      - name: Migrações do banco
+        run: npx prisma migrate deploy
+
+      - name: Dados iniciais (setores, tipos e usuários de teste)
+        if: ${{ vars.SEED_AO_PUBLICAR != 'false' }}
+        run: npx tsx prisma/seed.ts
+
+      - name: Build do frontend
+        run: npm run build
         working-directory: web
         env:
-          VITE_API_URL: https://${{ env.FLY_APP }}.fly.dev
-      - name: Publicar no Cloudflare Pages
-        working-directory: web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VITE_API_URL: /api
+
+      - name: Publicar no Cloudflare
+        run: npx wrangler deploy
+
+      - name: Segredos da API
         run: |
-          npx -y wrangler@4 pages project create "$PAGES_PROJECT" --production-branch main || true
-          npx -y wrangler@4 pages deploy dist --project-name "$PAGES_PROJECT" --branch main
+          if ! npx wrangler secret list | grep -q '"JWT_SECRET"'; then
+            printf '%s' "$(openssl rand -hex 32)" | npx wrangler secret put JWT_SECRET
+          fi
+          printf '%s' "$DATABASE_URL" | npx wrangler secret put DATABASE_URL
