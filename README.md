@@ -6,23 +6,33 @@ Segue o **Padrão de Desenvolvimento ITAX** (projeto de referência: ITAX 5S) e 
 
 ## Como funciona
 
-1. **Importar**: o revisor envia os XMLs (até 500 por vez). Chaves já importadas são ignoradas e arquivos que não são NF-e aparecem com o motivo.
-2. **Marcar e encaminhar**: o revisor seleciona as notas com problema, escolhe o tipo de divergência, descreve o ajuste e escolhe o responsável. O relógio do responsável começa a contar.
-3. **Responder**: o responsável vê a nota em _Minhas pendências_ e responde com uma **justificativa** ou a **correção** feita. Se não for com ele, **repassa** para outra pessoa ou setor.
-4. **Revisar**: o retorno volta para quem pediu, que **aceita** (divergência resolvida) ou **devolve** pedindo novo ajuste.
-5. **Painel**: setores que mais seguram notas, tempo médio de nota aberta, tempo médio até resolver, idade das pendências, tipos mais comuns e taxa de reabertura.
+Fluxo **Fluxo Fiscal**, conforme o manual do gestor e o protótipo "ITAX | Fluxo Fiscal":
 
-Cada passagem da nota por um responsável é uma `Atribuicao` (início e fim). A soma desses períodos dá o tempo por pessoa e por setor. O tempo é contado em **horas corridas**.
+1. **Cadastrar**: o Fiscal registra a divergência, a partir de notas importadas (XML), de uma nota digitada à mão ou de um **lote CSV** com prévia linha a linha. Cada divergência ganha um protocolo `DF-AAAA-NNNN`, prioridade, prazo e um responsável do setor escolhido. A mesma NF com o mesmo tipo não pode ter duas divergências abertas.
+2. **Tratar**: o responsável vê o item em _Minhas tratativas_, **assume** (status _Em tratamento_), pode salvar rascunho e **devolve ao Fiscal** com a devolutiva, o tipo de solução e as evidências anexadas (XML, PDF, JPG ou PNG, até 5 de 10 MB).
+3. **Validar**: o Fiscal confere em _Validação fiscal_ e **conclui** com um parecer ou **reabre** (com novo responsável e prazo, se quiser). Também pode **redistribuir** um item pendente ou em tratamento.
+4. **Acompanhar**: _Painel geral_ e _Relatórios e SLA_ mostram abertas, vencidas, SLA por setor, tempo com cada setor e responsável, idade da fila, motivos recorrentes e reincidência por fornecedor, com exportação CSV.
+
+Status: `PENDENTE → EM_TRATAMENTO → DEVOLVIDA → CONCLUIDA`. "Atrasada" não é gravada: vale quando o prazo (dia, horário de Brasília) passou e o item ainda está com o setor. O SLA é cumprido quando a divergência é concluída até o fim do dia do prazo.
+
+Cada passagem por um responsável é uma `Atribuicao` (início e fim), e a soma dá o tempo por pessoa e por setor, em horas corridas. Todas as ações ficam no histórico (`Movimentacao`).
+
+Avisos (nova atribuição, devolução, escalonamento na reabertura) ficam gravados e aparecem no sino. O envio por e-mail ainda não está ligado (sem SMTP), por isso ficam como _não enviada_. O aviso de prazo próximo precisa de uma rotina agendada e está desligado por padrão.
 
 ### Perfis
 
-| Perfil      | Pode                                                                  |
-| ----------- | --------------------------------------------------------------------- |
-| ADMIN       | Tudo, inclusive cadastros de usuários, setores e tipos de divergência |
-| REVISOR     | Importar, marcar e encaminhar, aceitar/devolver, ver o painel         |
-| RESPONSAVEL | Ver as próprias pendências, responder e repassar                      |
+| Perfil   | Pode                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------- |
+| FISCAL   | Cadastrar e importar divergências, validar, concluir, reabrir e redistribuir, relatórios |
+| TRATADOR | Ver as tratativas do próprio setor, assumir, salvar rascunho e devolver com evidências   |
+| GESTOR   | O mesmo que o Fiscal, em todos os setores                                                |
+| ADMIN    | Tudo, inclusive usuários, setores (com SLA), tipos de divergência e avisos               |
 
 O controle de acesso é verificado no backend (`PerfisGuard` + regras em `src/divergencias/regras.ts`).
+
+### Importação CSV
+
+Separador `;`, com cabeçalho. Colunas obrigatórias: `numero_nf`, `serie`, `cnpj_emissor`, `fornecedor`, `valor_total`, `tipo_divergencia`, `setor`, `responsavel` (nome ou e-mail), `descricao`. Opcionais: `chave_acesso`, `data_emissao`, `pedido_compra`, `centro_custo`, `unidade`, `prioridade`, `prazo`. A tela mostra a prévia com os erros de cada linha antes de gravar.
 
 ## Stack
 
@@ -52,7 +62,7 @@ npm run start:dev           # API em http://localhost:3000 (Swagger em /docs)
 cd web && npm run dev       # frontend em http://localhost:5173
 ```
 
-Usuários do seed (senha `nexo123`, ou o valor de `SEED_SENHA`): `admin@nexo.local`, `revisor@nexo.local`, `compras@nexo.local`, `financeiro@nexo.local`, `logistica@nexo.local`. Troque as senhas antes de qualquer uso real.
+Usuários do seed (senha `nexo123`, ou o valor de `SEED_SENHA`): `admin@`, `fiscal@`, `gestor@`, `suprimentos@`, `compras@`, `financeiro@` e `obras@nexo.local`. Com `SEED_DEMO=true` (e nenhuma divergência gravada) o seed também cria 10 divergências de exemplo em todos os status. Troque as senhas antes de qualquer uso real.
 
 ## Scripts
 

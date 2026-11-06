@@ -1,22 +1,26 @@
 import { MantineProvider } from '@mantine/core';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { theme } from '../theme';
-import { BadgeDivergencia, corDoTempo } from './rotulos';
+import { BadgeDivergencia, BadgePrioridade, corDoTempo } from './rotulos';
 
-describe('rótulos de status', () => {
-  it('mostra a situação da divergência em português', () => {
+describe('rótulos', () => {
+  it('mostra o status e o atraso', () => {
     render(
-      <MantineProvider theme={theme}>
-        <BadgeDivergencia status="AGUARDANDO_REVISAO" />
+      <MantineProvider>
+        <BadgeDivergencia status="DEVOLVIDA" atrasada />
+        <BadgePrioridade prioridade="CRITICA" />
+        <BadgePrioridade prioridade="NORMAL" />
       </MantineProvider>,
     );
-    expect(screen.getByText('Aguardando revisão')).toBeInTheDocument();
+    expect(screen.getByText('Devolvida ao Fiscal')).toBeInTheDocument();
+    expect(screen.getByText('Atrasada')).toBeInTheDocument();
+    expect(screen.getByText('Crítica')).toBeInTheDocument();
+    expect(screen.queryByText('Normal')).toBeNull();
   });
 
-  it('destaca em vermelho só o que está parado há mais de 3 dias', () => {
-    expect(corDoTempo(5)).toBe('gray');
+  it('cor do tempo parado', () => {
+    expect(corDoTempo(2)).toBe('gray');
     expect(corDoTempo(30)).toBe('yellow');
-    expect(corDoTempo(80)).toBe('itaxRed');
+    expect(corDoTempo(100)).toBe('itaxRed');
   });
 });

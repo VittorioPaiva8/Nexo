@@ -20,7 +20,7 @@ export function xmlNfeExemplo(
         <dhEmi>${opcoes.data ?? '2026-11-03T10:15:00-03:00'}</dhEmi>
       </ide>
       <emit>
-        <CNPJ>${opcoes.cnpj ?? '12345678000190'}</CNPJ>
+        <CNPJ>${opcoes.cnpj ?? '12345678000195'}</CNPJ>
         <xNome>${opcoes.emitente ?? 'Fornecedor Exemplo Ltda'}</xNome>
       </emit>
       <dest>

@@ -9,10 +9,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginDto'
+              $ref: "#/components/schemas/LoginDto"
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       summary: Entra no sistema e devolve o token JWT
       tags:
         - Autenticação
@@ -21,8 +21,8 @@ paths:
       operationId: AuthController_me
       parameters: []
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Dados do usuário logado
@@ -38,14 +38,21 @@ paths:
           schema:
             type: string
             enum:
+              - FISCAL
+              - TRATADOR
+              - GESTOR
               - ADMIN
-              - REVISOR
-              - RESPONSAVEL
         - name: setorId
           required: false
           in: query
           schema:
             type: number
+        - name: busca
+          required: false
+          in: query
+          description: Nome ou e-mail
+          schema:
+            type: string
         - name: incluirInativos
           required: false
           in: query
@@ -53,8 +60,8 @@ paths:
           schema:
             type: boolean
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Lista usuários (usado para escolher o responsável)
@@ -68,10 +75,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CriarUsuarioDto'
+              $ref: "#/components/schemas/CriarUsuarioDto"
       responses:
-        '201':
-          description: ''
+        "201":
+          description: ""
       security:
         - bearer: []
       summary: Cria um usuário
@@ -91,10 +98,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AtualizarUsuarioDto'
+              $ref: "#/components/schemas/AtualizarUsuarioDto"
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Atualiza ou desativa um usuário
@@ -105,8 +112,8 @@ paths:
       operationId: SetoresController_listar
       parameters: []
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Lista os setores
@@ -120,10 +127,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CriarSetorDto'
+              $ref: "#/components/schemas/CriarSetorDto"
       responses:
-        '201':
-          description: ''
+        "201":
+          description: ""
       security:
         - bearer: []
       summary: Cria um setor
@@ -143,10 +150,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AtualizarSetorDto'
+              $ref: "#/components/schemas/AtualizarSetorDto"
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Atualiza ou desativa um setor
@@ -157,8 +164,8 @@ paths:
       operationId: TiposDivergenciaController_listar
       parameters: []
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Lista os tipos de divergência
@@ -172,10 +179,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CriarTipoDivergenciaDto'
+              $ref: "#/components/schemas/CriarTipoDivergenciaDto"
       responses:
-        '201':
-          description: ''
+        "201":
+          description: ""
       security:
         - bearer: []
       summary: Cria um tipo de divergência
@@ -195,10 +202,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AtualizarTipoDivergenciaDto'
+              $ref: "#/components/schemas/AtualizarTipoDivergenciaDto"
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Atualiza ou desativa um tipo de divergência
@@ -223,8 +230,8 @@ paths:
                     type: string
                     format: binary
       responses:
-        '201':
-          description: ''
+        "201":
+          description: ""
       security:
         - bearer: []
       summary: Importa XMLs de NF-e (até 500 arquivos de 5 MB por envio)
@@ -255,7 +262,7 @@ paths:
           schema:
             type: string
             enum:
-              - IMPORTADA
+              - SEM_PENDENCIA
               - EM_AJUSTE
               - AJUSTADA
         - name: busca
@@ -270,8 +277,8 @@ paths:
           schema:
             type: number
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Lista as notas importadas (paginado)
@@ -287,8 +294,8 @@ paths:
           schema:
             type: number
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Detalhe da nota com suas divergências
@@ -304,13 +311,72 @@ paths:
           schema:
             type: number
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
       summary: Baixa o XML original da nota
       tags:
         - Notas fiscais
+  /notificacoes:
+    get:
+      operationId: NotificacoesController_minhas
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Últimos avisos do usuário logado e total não lido
+      tags:
+        - Notificações
+  /notificacoes/lidas:
+    post:
+      operationId: NotificacoesController_marcarLidas
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Marca os avisos do usuário como lidos
+      tags:
+        - Notificações
+  /notificacoes/configuracoes:
+    get:
+      operationId: NotificacoesController_configuracoes
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Preferências de disparo de avisos
+      tags:
+        - Notificações
+  /notificacoes/configuracoes/{evento}:
+    patch:
+      operationId: NotificacoesController_configurar
+      parameters:
+        - name: evento
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigurarAvisoDto"
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Liga ou desliga um tipo de aviso
+      tags:
+        - Notificações
   /divergencias:
     post:
       operationId: DivergenciasController_criar
@@ -320,13 +386,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CriarDivergenciasDto'
+              $ref: "#/components/schemas/CriarDivergenciaDto"
       responses:
-        '201':
-          description: ''
+        "201":
+          description: ""
       security:
         - bearer: []
-      summary: Marca notas como divergentes e encaminha ao responsável
+      summary: Cadastra a divergência (nota manual ou notas importadas), gera
+        protocolo e encaminha ao setor
       tags:
         - Divergências
     get:
@@ -350,15 +417,21 @@ paths:
         - name: escopo
           required: false
           in: query
-          description: minhas = pendentes comigo; solicitadas = abertas por mim; todas =
-            revisor/admin
+          description: todas = central (tratador vê só o seu setor); minhas = comigo e não
+            concluídas; validacao = devolvidas ao Fiscal
           schema:
-            default: minhas
+            default: todas
             type: string
             enum:
-              - minhas
-              - solicitadas
               - todas
+              - minhas
+              - validacao
+        - name: busca
+          required: false
+          in: query
+          description: Protocolo, número da NF, chave, fornecedor ou CNPJ
+          schema:
+            type: string
         - name: status
           required: false
           in: query
@@ -366,9 +439,35 @@ paths:
             type: string
             enum:
               - PENDENTE
-              - AGUARDANDO_REVISAO
-              - RESOLVIDA
+              - EM_TRATAMENTO
+              - DEVOLVIDA
+              - CONCLUIDA
+        - name: atrasadas
+          required: false
+          in: query
+          description: Somente com prazo vencido e ainda com o setor
+          schema:
+            type: boolean
+        - name: prioridade
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - NORMAL
+              - ALTA
+              - CRITICA
         - name: setorId
+          required: false
+          in: query
+          schema:
+            type: number
+        - name: responsavelId
+          required: false
+          in: query
+          schema:
+            type: number
+        - name: tipoId
           required: false
           in: query
           schema:
@@ -379,11 +478,23 @@ paths:
           schema:
             type: number
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
-      summary: Lista divergências (minhas pendências, solicitadas por mim ou todas)
+      summary: Central de divergências, fila do responsável ou fila de validação
+      tags:
+        - Divergências
+  /divergencias/contadores:
+    get:
+      operationId: DivergenciasController_contadores
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Totais da central (pendentes, devolvidas, vencidas) e da fila do usuário
       tags:
         - Divergências
   /divergencias/{id}:
@@ -396,16 +507,34 @@ paths:
           schema:
             type: number
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
-      summary: Detalhe com histórico de mensagens e tempo por responsável
+      summary: Detalhe com nota, histórico de movimentações, anexos e tempo por
+        responsável
       tags:
         - Divergências
-  /divergencias/{id}/responder:
+  /divergencias/{id}/assumir:
     post:
-      operationId: DivergenciasController_responder
+      operationId: DivergenciasController_assumir
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Responsável assume a tratativa (Pendente → Em tratamento)
+      tags:
+        - Divergências
+  /divergencias/{id}/rascunho:
+    put:
+      operationId: DivergenciasController_rascunho
       parameters:
         - name: id
           required: true
@@ -417,59 +546,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResponderDivergenciaDto'
+              $ref: "#/components/schemas/RascunhoDto"
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
-      summary: Responsável envia justificativa ou correção e devolve ao solicitante
-      tags:
-        - Divergências
-  /divergencias/{id}/repassar:
-    post:
-      operationId: DivergenciasController_repassar
-      parameters:
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: number
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RepassarDivergenciaDto'
-      responses:
-        '200':
-          description: ''
-      security:
-        - bearer: []
-      summary: Repassa a divergência para outro responsável
-      tags:
-        - Divergências
-  /divergencias/{id}/aceitar:
-    post:
-      operationId: DivergenciasController_aceitar
-      parameters:
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: number
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AceitarDivergenciaDto'
-      responses:
-        '200':
-          description: ''
-      security:
-        - bearer: []
-      summary: Solicitante aceita o retorno e encerra a divergência
+      summary: Salva o rascunho da devolutiva sem mudar o status
       tags:
         - Divergências
   /divergencias/{id}/devolver:
@@ -484,20 +567,241 @@ paths:
       requestBody:
         required: true
         content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - texto
+              properties:
+                texto:
+                  type: string
+                tipoSolucao:
+                  type: string
+                arquivos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
           application/json:
             schema:
-              $ref: '#/components/schemas/DevolverDivergenciaDto'
+              type: object
+              required:
+                - texto
+              properties:
+                texto:
+                  type: string
+                tipoSolucao:
+                  type: string
+                arquivos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
-      summary: Solicitante devolve ao responsável (ou a outro) pedindo novo ajuste
+      summary: Responsável descreve a ação realizada, anexa evidências e devolve ao
+        Fiscal
       tags:
         - Divergências
+  /divergencias/{id}/concluir:
+    post:
+      operationId: DivergenciasController_concluir
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConcluirDto"
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Fiscal valida a correção, registra o parecer e conclui
+      tags:
+        - Divergências
+  /divergencias/{id}/reabrir:
+    post:
+      operationId: DivergenciasController_reabrir
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReabrirDto"
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Fiscal reabre com motivo; volta ao responsável mantendo o histórico e o
+        prazo
+      tags:
+        - Divergências
+  /divergencias/{id}/redistribuir:
+    post:
+      operationId: DivergenciasController_redistribuir
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedistribuirDto"
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Encaminha para outro responsável ou setor
+      tags:
+        - Divergências
+  /divergencias/{id}/anexos:
+    post:
+      operationId: DivergenciasController_anexar
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - arquivos
+              properties:
+                arquivos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "201":
+          description: ""
+      security:
+        - bearer: []
+      summary: Anexa documentos (XML, PDF, JPG, PNG; até 5 de 10 MB)
+      tags:
+        - Divergências
+  /divergencias/anexos/{anexoId}:
+    get:
+      operationId: DivergenciasController_baixarAnexo
+      parameters:
+        - name: anexoId
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Baixa um anexo
+      tags:
+        - Divergências
+  /importacoes/csv/previa:
+    post:
+      operationId: ImportacoesController_previa
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - arquivo
+              properties:
+                arquivo:
+                  type: string
+                  format: binary
+                setorId:
+                  type: integer
+                responsavelId:
+                  type: integer
+                prazo:
+                  type: string
+                  format: date
+                prioridade:
+                  type: string
+                  enum:
+                    - NORMAL
+                    - ALTA
+                    - CRITICA
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Confere o CSV (obrigatórios, CNPJ, chave, cadastros e duplicidades) sem
+        gravar
+      tags:
+        - Importação em lote
+  /importacoes/csv:
+    post:
+      operationId: ImportacoesController_confirmar
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - arquivo
+              properties:
+                arquivo:
+                  type: string
+                  format: binary
+                setorId:
+                  type: integer
+                responsavelId:
+                  type: integer
+                prazo:
+                  type: string
+                  format: date
+                prioridade:
+                  type: string
+                  enum:
+                    - NORMAL
+                    - ALTA
+                    - CRITICA
+      responses:
+        "201":
+          description: ""
+      security:
+        - bearer: []
+      summary: Importa as linhas válidas do CSV e distribui as tratativas
+      tags:
+        - Importação em lote
   /metricas:
     get:
-      operationId: MetricasController_calcular
+      operationId: MetricasController_relatorio
       parameters:
         - name: inicio
           required: false
@@ -524,20 +828,32 @@ paths:
           schema:
             type: number
       responses:
-        '200':
-          description: ''
+        "200":
+          description: ""
       security:
         - bearer: []
-      summary: 'Indicadores do painel: setores que mais seguram notas, tempos médios,
-        faixas de idade'
+      summary: "Relatórios e SLA: motivos, SLA e tempo por setor, idade da fila,
+        reincidência por fornecedor"
       tags:
-        - Métricas
+        - Indicadores
+  /metricas/painel:
+    get:
+      operationId: MetricasController_painel
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: "Painel geral: fila atual, pendências que exigem atenção, volume e SLA"
+      tags:
+        - Indicadores
 info:
   title: Nexo — NF-es divergentes
-  description: 'API do Nexo: importação de NF-es, marcação de divergências,
+  description: "API do Nexo: importação de NF-es, marcação de divergências,
     encaminhamento a responsáveis, retorno com justificativa/correção e métricas
     de tempo por setor e responsável. Respostas no envelope { data }, { data,
-    meta } (listas) ou { error }.'
+    meta } (listas) ou { error }."
   version: 0.1.0
   contact: {}
 tags: []
@@ -569,7 +885,7 @@ components:
           example: Maria Souza
         email:
           type: string
-          example: maria@itax.com.br
+          example: maria@empresa.com.br
         senha:
           type: string
           example: senha123
@@ -577,12 +893,13 @@ components:
         perfil:
           type: string
           enum:
+            - FISCAL
+            - TRATADOR
+            - GESTOR
             - ADMIN
-            - REVISOR
-            - RESPONSAVEL
         setorId:
           type: number
-          description: Setor do usuário (obrigatório para responsáveis)
+          description: Setor principal do usuário (obrigatório para tratadores)
       required:
         - nome
         - email
@@ -601,9 +918,10 @@ components:
         perfil:
           type: string
           enum:
+            - FISCAL
+            - TRATADOR
+            - GESTOR
             - ADMIN
-            - REVISOR
-            - RESPONSAVEL
         setorId:
           type: object
           nullable: true
@@ -614,7 +932,14 @@ components:
       properties:
         nome:
           type: string
-          example: Compras
+          example: Suprimentos
+        descricao:
+          type: string
+          example: Pedidos e fornecedores
+        slaDias:
+          type: number
+          example: 2
+          description: Prazo padrão em dias corridos
       required:
         - nome
     AtualizarSetorDto:
@@ -622,7 +947,12 @@ components:
       properties:
         nome:
           type: string
-          example: Compras
+          example: Suprimentos
+        descricao:
+          type: string
+        slaDias:
+          type: number
+          example: 2
         ativo:
           type: boolean
     CriarTipoDivergenciaDto:
@@ -630,7 +960,10 @@ components:
       properties:
         nome:
           type: string
-          example: Valor divergente do pedido
+          example: Sem pedido de compra
+        setorOrigemId:
+          type: number
+          description: Setor de origem do motivo (Suprimentos, Fiscal, Financeiro...)
       required:
         - nome
     AtualizarTipoDivergenciaDto:
@@ -638,70 +971,160 @@ components:
       properties:
         nome:
           type: string
-          example: Valor divergente do pedido
+          example: Sem pedido de compra
+        setorOrigemId:
+          type: object
+          nullable: true
         ativo:
           type: boolean
-    CriarDivergenciasDto:
+    ConfigurarAvisoDto:
+      type: object
+      properties:
+        ativo:
+          type: boolean
+      required:
+        - ativo
+    NotaManualDto:
+      type: object
+      properties:
+        numero:
+          type: string
+          example: "000125"
+        serie:
+          type: string
+          example: "1"
+        chaveAcesso:
+          type: string
+          description: 44 dígitos, quando for NF-e
+        emitenteNome:
+          type: string
+          example: Materiais Alfa Ltda.
+        emitenteCnpj:
+          type: string
+          example: 11.222.333/0001-81
+        valorTotal:
+          type: string
+          example: "10500.00"
+          description: Valor total da NF
+        dataEmissao:
+          type: string
+          example: 2026-11-05
+        destinatarioDoc:
+          type: string
+          description: CNPJ da unidade recebedora
+        pedidoCompra:
+          type: string
+          example: PC-02861
+        unidade:
+          type: string
+          example: Cascavel
+        centroCusto:
+          type: string
+          example: "26.30"
+      required:
+        - numero
+        - serie
+        - emitenteNome
+        - emitenteCnpj
+        - valorTotal
+    CriarDivergenciaDto:
       type: object
       properties:
         notaFiscalIds:
-          description: Notas marcadas como divergentes (até 200 por envio)
+          description: Notas já importadas (XML) que recebem a mesma divergência. Use isto
+            ou "nota".
           type: array
           items:
             type: number
+        nota:
+          description: Cadastro manual da nota
+          allOf:
+            - $ref: "#/components/schemas/NotaManualDto"
         tipoId:
           type: number
-        descricao:
-          type: string
-          example: Valor da nota diferente do pedido 4512 (R$ 1.500,00).
+        setorId:
+          type: number
+          description: Setor responsável pela correção
         responsavelId:
           type: number
-          description: Usuário responsável pelo ajuste
-      required:
-        - notaFiscalIds
-        - tipoId
-        - descricao
-        - responsavelId
-    ResponderDivergenciaDto:
-      type: object
-      properties:
-        tipo:
+          description: Usuário do setor que vai tratar
+        prioridade:
           type: string
           enum:
-            - JUSTIFICATIVA
-            - CORRECAO
-        texto:
+            - NORMAL
+            - ALTA
+            - CRITICA
+          default: NORMAL
+        prazo:
           type: string
-          example: Nota cancelada e reemitida com o valor correto (NF 1240).
+          example: 2026-11-07
+          description: Sem prazo, usa o SLA do setor
+        descricao:
+          type: string
+          example: Quantidade da NF (12) diferente do pedido (10). Ajustar o pedido.
+        valorNf:
+          type: string
+          example: 12 un
+          description: Valor/quantidade que veio na NF
+        valorEsperado:
+          type: string
+          example: 10 un
+          description: Valor/quantidade esperado
+        correcaoEsperada:
+          type: string
+          example: Corrigir o pedido para 12 unidades
       required:
-        - tipo
-        - texto
-    RepassarDivergenciaDto:
+        - tipoId
+        - setorId
+        - responsavelId
+        - descricao
+    RascunhoDto:
       type: object
       properties:
-        responsavelId:
-          type: number
-          description: Novo responsável
         texto:
           type: string
-          example: Quem negociou esse pedido foi o setor de Compras.
+        tipoSolucao:
+          type: string
+          example: Pedido de compra corrigido
+      required:
+        - texto
+    ConcluirDto:
+      type: object
+      properties:
+        parecer:
+          type: string
+          example: Pedido conferido no ERP; lançamento liberado.
+      required:
+        - parecer
+    ReabrirDto:
+      type: object
+      properties:
+        motivo:
+          type: string
+          example: O valor unitário ainda não confere com a NF.
+        responsavelId:
+          type: number
+          description: Outro responsável do mesmo setor; se omitido, volta ao último
+        prazo:
+          type: string
+          example: 2026-11-10
+          description: Novo prazo; o anterior fica no histórico
+      required:
+        - motivo
+    RedistribuirDto:
+      type: object
+      properties:
+        setorId:
+          type: number
+          description: Novo setor; se omitido, mantém o atual
+        responsavelId:
+          type: number
+        motivo:
+          type: string
+          example: Pedido negociado pelo Financeiro.
+        prazo:
+          type: string
+          example: 2026-11-10
       required:
         - responsavelId
-        - texto
-    AceitarDivergenciaDto:
-      type: object
-      properties:
-        texto:
-          type: string
-          example: Conferido, obrigado.
-    DevolverDivergenciaDto:
-      type: object
-      properties:
-        texto:
-          type: string
-          example: A carta de correção não resolve; precisa reemitir.
-        responsavelId:
-          type: number
-          description: Outro responsável; se omitido, volta para o último
-      required:
-        - texto
+        - motivo

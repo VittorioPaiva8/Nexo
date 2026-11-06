@@ -2,13 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Paginado } from '../common/envelope.interceptor.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import type { ArquivoRecebido } from '../anexos/arquivos.js';
+import { apenasDigitos, normalizarNumero } from '../common/documentos.js';
 import type { FiltroNotasDto } from './dto/notas.dto.js';
 import { ErroLeituraNfe, lerXmlNfe, type DadosNfe } from './nfe-parser.js';
-
-export interface ArquivoRecebido {
-  originalname: string;
-  buffer: Buffer;
-}
 
 const CAMPOS_LISTA = {
   id: true,
@@ -23,6 +20,10 @@ const CAMPOS_LISTA = {
   destinatarioNome: true,
   valorTotal: true,
   naturezaOperacao: true,
+  pedidoCompra: true,
+  unidade: true,
+  centroCusto: true,
+  origem: true,
   status: true,
   importacaoId: true,
   criadaEm: true,
@@ -53,18 +54,36 @@ export class NotasService {
       }
     }
 
+    // Já existente pela chave ou por CNPJ + série + número (nota cadastrada manualmente ou por CSV).
     const existentes = await this.prisma.notaFiscal.findMany({
-      where: { chaveAcesso: { in: [...lidas.keys()] } },
-      select: { chaveAcesso: true },
+      where: {
+        OR: [
+          { chaveAcesso: { in: [...lidas.keys()] } },
+          ...[...lidas.values()].map(({ dados }) => ({
+            emitenteCnpj: dados.emitenteCnpj,
+            serie: dados.serie,
+            numero: dados.numero,
+          })),
+        ],
+      },
+      select: { chaveAcesso: true, emitenteCnpj: true, serie: true, numero: true },
     });
-    for (const { chaveAcesso } of existentes) {
-      duplicadas.push({ arquivo: lidas.get(chaveAcesso)!.arquivo, chaveAcesso });
-      lidas.delete(chaveAcesso);
+    for (const [chave, { dados, arquivo }] of lidas) {
+      const repetida = existentes.some(
+        (e) =>
+          e.chaveAcesso === chave ||
+          (e.emitenteCnpj === dados.emitenteCnpj && e.serie === dados.serie && e.numero === dados.numero),
+      );
+      if (repetida) {
+        duplicadas.push({ arquivo, chaveAcesso: chave });
+        lidas.delete(chave);
+      }
     }
 
     const importacao = await this.prisma.$transaction(async (tx) => {
       const imp = await tx.importacao.create({
         data: {
+          origem: 'XML',
           usuarioId,
           totalArquivos: arquivos.length,
           totalImportadas: lidas.size,
@@ -73,7 +92,12 @@ export class NotasService {
         },
       });
       await tx.notaFiscal.createMany({
-        data: [...lidas.values()].map(({ dados, xml }) => ({ ...dados, xml, importacaoId: imp.id })),
+        data: [...lidas.values()].map(({ dados, xml }) => ({
+          ...dados,
+          xml,
+          origem: 'XML' as const,
+          importacaoId: imp.id,
+        })),
         skipDuplicates: true,
       });
       return imp;
@@ -82,7 +106,7 @@ export class NotasService {
     const notas = await this.prisma.notaFiscal.findMany({
       where: { importacaoId: importacao.id },
       select: CAMPOS_LISTA,
-      orderBy: { dataEmissao: 'asc' },
+      orderBy: { id: 'asc' },
     });
     return { importacao, notas, duplicadas, erros };
   }
@@ -95,9 +119,13 @@ export class NotasService {
       ...(busca
         ? {
             OR: [
-              { numero: { contains: busca } },
-              { chaveAcesso: { contains: busca.replace(/\D/g, '') || busca } },
-              { emitenteCnpj: { contains: busca.replace(/\D/g, '') || busca } },
+              ...(apenasDigitos(busca)
+                ? [
+                    { numero: { contains: normalizarNumero(busca) } },
+                    { chaveAcesso: { contains: apenasDigitos(busca) } },
+                    { emitenteCnpj: { contains: apenasDigitos(busca) } },
+                  ]
+                : []),
               { emitenteNome: { contains: busca, mode: 'insensitive' } },
             ],
           }
@@ -109,7 +137,7 @@ export class NotasService {
         where,
         select: {
           ...CAMPOS_LISTA,
-          _count: { select: { divergencias: { where: { status: { not: 'RESOLVIDA' } } } } },
+          _count: { select: { divergencias: { where: { status: { not: 'CONCLUIDA' } } } } },
         },
         orderBy: [{ criadaEm: 'desc' }, { id: 'desc' }],
         skip: (filtro.pagina - 1) * filtro.porPagina,
@@ -129,10 +157,14 @@ export class NotasService {
         ...CAMPOS_LISTA,
         divergencias: {
           orderBy: { abertaEm: 'desc' },
-          include: {
-            tipo: true,
-            solicitante: { select: { id: true, nome: true } },
-            responsavelAtual: { select: { id: true, nome: true, setor: true } },
+          select: {
+            id: true,
+            protocolo: true,
+            status: true,
+            prazo: true,
+            tipo: { select: { id: true, nome: true } },
+            setor: { select: { id: true, nome: true } },
+            responsavelAtual: { select: { id: true, nome: true } },
           },
         },
       },
@@ -146,7 +178,7 @@ export class NotasService {
       where: { id },
       select: { xml: true, chaveAcesso: true },
     });
-    if (!nota) throw new NotFoundException('Nota fiscal não encontrada');
-    return nota;
+    if (!nota || !nota.xml) throw new NotFoundException('Esta nota não tem XML anexado');
+    return { xml: nota.xml, chaveAcesso: nota.chaveAcesso ?? `nota-${id}` };
   }
 }

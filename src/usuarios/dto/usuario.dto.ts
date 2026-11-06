@@ -19,7 +19,7 @@ export class CriarUsuarioDto {
   @MaxLength(120)
   nome: string;
 
-  @ApiProperty({ example: 'maria@itax.com.br' })
+  @ApiProperty({ example: 'maria@empresa.com.br' })
   @IsEmail({}, { message: 'Informe um e-mail válido' })
   email: string;
 
@@ -32,7 +32,7 @@ export class CriarUsuarioDto {
   @IsEnum(Perfil)
   perfil: Perfil;
 
-  @ApiPropertyOptional({ description: 'Setor do usuário (obrigatório para responsáveis)' })
+  @ApiPropertyOptional({ description: 'Setor principal do usuário (obrigatório para tratadores)' })
   @IsOptional()
   @IsInt()
   setorId?: number;
@@ -84,6 +84,12 @@ export class FiltroUsuariosDto {
   @Type(() => Number)
   @IsInt()
   setorId?: number;
+
+  @ApiPropertyOptional({ description: 'Nome ou e-mail' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  busca?: string;
 
   @ApiPropertyOptional({ description: 'Inclui usuários inativos' })
   @IsOptional()

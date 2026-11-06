@@ -10,11 +10,11 @@ export function Marca({ tamanho = 'lg' }: { tamanho?: 'lg' | 'xl' }) {
       <img
         src="/grupo-itax-logo-branca.svg"
         alt="Grupo Itax"
-        style={{ height: tamanho === 'xl' ? 40 : 26, minWidth: 0 }}
+        style={{ height: tamanho === 'xl' ? 40 : 24, minWidth: 0 }}
         onError={(e) => (e.currentTarget.style.display = 'none')}
       />
       <Text c="white" fw={600} fz={tamanho} style={{ letterSpacing: -0.5 }}>
-        Nexo
+        Fluxo Fiscal
       </Text>
     </Group>
   );

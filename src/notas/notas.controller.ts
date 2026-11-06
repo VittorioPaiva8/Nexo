@@ -16,19 +16,21 @@ import type { Response } from 'express';
 import { Perfis } from '../common/perfis.decorator.js';
 import { UsuarioAtual, type UsuarioAutenticado } from '../common/usuario-atual.js';
 import { FiltroNotasDto } from './dto/notas.dto.js';
-import { NotasService, type ArquivoRecebido } from './notas.service.js';
+import type { ArquivoRecebido } from '../anexos/arquivos.js';
+import { NotasService } from './notas.service.js';
 
 const MAX_ARQUIVOS = 500;
 const MAX_BYTES = 5 * 1024 * 1024;
 
 @ApiTags('Notas fiscais')
 @ApiBearerAuth()
+@Perfis('FISCAL', 'GESTOR', 'ADMIN')
 @Controller('notas')
 export class NotasController {
   constructor(private readonly notas: NotasService) {}
 
   @Post('importar')
-  @Perfis('ADMIN', 'REVISOR')
+  @Perfis('FISCAL', 'GESTOR', 'ADMIN')
   @UseInterceptors(FilesInterceptor('arquivos', MAX_ARQUIVOS, { limits: { fileSize: MAX_BYTES } }))
   @ApiConsumes('multipart/form-data')
   @ApiBody({

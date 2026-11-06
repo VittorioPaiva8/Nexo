@@ -1,226 +1,196 @@
 import { BarChart } from '@mantine/charts';
-import { Card, Grid, Group, Select, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
-import { DatePickerInput, type DatesRangeValue } from '@mantine/dates';
-import { IconCalendar } from '@tabler/icons-react';
-import dayjs from 'dayjs';
-import { useState } from 'react';
+import { Anchor, Button, Grid, Group, SimpleGrid, Stack, Text } from '@mantine/core';
+import { IconCircleCheck, IconClockHour4, IconListDetails, IconProgress } from '@tabler/icons-react';
+import { useNavigate } from 'react-router';
 import { api } from '../api/cliente';
-import type { LinhaTempo, Metricas, Setor, TipoDivergencia } from '../api/tipos';
+import type { PainelGeral } from '../api/tipos';
 import { useApi } from '../api/useApi';
 import { Carregando, ErroCarregar, Vazio } from '../components/Estado';
-import { Titulo } from '../components/Titulo';
-import { formatarDuracao, formatarNumero } from '../utils/formato';
+import { BadgeDivergencia, BadgePrioridade } from '../components/rotulos';
+import { BarraHorizontal, Cabecalho, Estatistica, Kpi, Painel as Quadro } from '../components/ui';
+import { formatarDia, formatarDias, formatarPercentual } from '../utils/formato';
 
-// Série única: um tom neutro escuro. O vermelho fica reservado para ações e alertas (manual ITAX, seção 6).
-const COR_SERIE = 'dark.4';
-
-function Indicador({ rotulo, valor, detalhe }: { rotulo: string; valor: string; detalhe?: string }) {
-  return (
-    <Card>
-      <Text fz="sm" c="dimmed">
-        {rotulo}
-      </Text>
-      <Text fz={28} fw={700} style={{ letterSpacing: -1 }}>
-        {valor}
-      </Text>
-      {detalhe && (
-        <Text fz="xs" c="dimmed">
-          {detalhe}
-        </Text>
-      )}
-    </Card>
-  );
-}
-
-function TabelaTempo({ linhas, rotulo }: { linhas: LinhaTempo[]; rotulo: string }) {
-  return (
-    <Table.ScrollContainer minWidth={460}>
-      <Table verticalSpacing="xs">
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>{rotulo}</Table.Th>
-            <Table.Th ta="right">Tempo total</Table.Th>
-            <Table.Th ta="right">Média por nota</Table.Th>
-            <Table.Th ta="right">Notas recebidas</Table.Th>
-            <Table.Th ta="right">Pendentes agora</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {linhas.map((l) => (
-            <Table.Tr key={`${l.id}-${l.nome}`}>
-              <Table.Td fw={600}>{l.nome}</Table.Td>
-              <Table.Td ta="right">{formatarDuracao(l.horasTotais)}</Table.Td>
-              <Table.Td ta="right">{formatarDuracao(l.horasMedias)}</Table.Td>
-              <Table.Td ta="right">{l.passagens}</Table.Td>
-              <Table.Td ta="right" fw={l.pendentesAgora ? 700 : undefined}>
-                {l.pendentesAgora}
-              </Table.Td>
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
-    </Table.ScrollContainer>
-  );
-}
+const dois = (n: number) => String(n).padStart(2, '0');
 
 export function Painel() {
-  const [periodo, setPeriodo] = useState<DatesRangeValue<string>>([
-    dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
-    dayjs().format('YYYY-MM-DD'),
-  ]);
-  const [setorId, setSetorId] = useState<string | null>(null);
-  const [tipoId, setTipoId] = useState<string | null>(null);
-
-  const setores = useApi(() => api.get<Setor[]>('/setores'), []);
-  const tipos = useApi(() => api.get<TipoDivergencia[]>('/tipos-divergencia'), []);
-  const [inicio, fim] = periodo;
-  const {
-    dados: m,
-    carregando,
-    erro,
-  } = useApi(
-    () => api.get<Metricas>('/metricas', { inicio, fim, setorId, tipoId }),
-    [inicio, fim, setorId, tipoId],
-  );
+  const navigate = useNavigate();
+  const { dados: p, carregando, erro } = useApi(() => api.get<PainelGeral>('/metricas/painel'), []);
 
   return (
-    <Stack>
-      <Titulo titulo="Painel" descricao="Onde as notas param e quanto tempo ficam abertas sem ajuste." />
-
-      <Group gap="sm" wrap="wrap">
-        <DatePickerInput
-          type="range"
-          label="Abertas no período"
-          valueFormat="DD/MM/YYYY"
-          locale="pt-br"
-          leftSection={<IconCalendar size={16} />}
-          value={periodo}
-          onChange={setPeriodo}
-          allowSingleDateInRange
-          clearable
-          miw={260}
-        />
-        <Select
-          label="Setor"
-          placeholder="Todos"
-          clearable
-          data={(setores.dados ?? []).map((s) => ({ value: String(s.id), label: s.nome }))}
-          value={setorId}
-          onChange={setSetorId}
-        />
-        <Select
-          label="Tipo de divergência"
-          placeholder="Todos"
-          clearable
-          data={(tipos.dados ?? []).map((t) => ({ value: String(t.id), label: t.nome }))}
-          value={tipoId}
-          onChange={setTipoId}
-        />
-      </Group>
-
+    <>
+      <Cabecalho
+        sobretitulo="Central de tratativas"
+        titulo="Visão geral do Fluxo Fiscal"
+        descricao="Controle de divergências de notas fiscais e movimentações entre setores."
+        acoes={
+          <>
+            <Button
+              variant="default"
+              leftSection={<IconListDetails size={16} />}
+              onClick={() => navigate('/divergencias')}
+            >
+              Ver divergências
+            </Button>
+            <Button onClick={() => navigate('/nova')}>+ Nova divergência</Button>
+          </>
+        }
+      />
       {carregando && <Carregando />}
       {erro && <ErroCarregar mensagem={erro} />}
-      {m && !carregando && m.resumo.total === 0 && (
-        <Vazio titulo="Nenhuma divergência no período">
-          Ajuste o filtro ou encaminhe notas para começar.
-        </Vazio>
-      )}
-
-      {m && !carregando && m.resumo.total > 0 && (
-        <>
-          <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>
-            <Indicador
-              rotulo="Abertas agora"
-              valor={String(m.resumo.abertas)}
-              detalhe={`${m.resumo.pendentesComResponsavel} com responsável · ${m.resumo.aguardandoRevisao} para revisar`}
+      {p && (
+        <Stack gap="lg">
+          <SimpleGrid cols={{ base: 1, xs: 2, lg: 4 }}>
+            <Kpi
+              rotulo="Divergências abertas"
+              valor={dois(p.kpis.abertas)}
+              rodape={`+ ${p.kpis.cadastradasHoje} cadastradas hoje`}
+              icone={<IconListDetails size={20} />}
             />
-            <Indicador
-              rotulo="Tempo médio de nota aberta"
-              valor={formatarDuracao(m.resumo.horasMediasAbertas)}
-              detalhe="Das que ainda não foram ajustadas"
+            <Kpi
+              rotulo="Em tratamento"
+              valor={dois(p.kpis.emTratamento)}
+              rodape="Com os setores responsáveis"
+              icone={<IconProgress size={20} />}
+              cor="blue"
             />
-            <Indicador
-              rotulo="Tempo médio até resolver"
-              valor={formatarDuracao(m.resumo.horasMediasResolucao)}
-              detalhe={`${m.resumo.resolvidas} resolvida(s) de ${m.resumo.total}`}
+            <Kpi
+              rotulo="Aguardando validação"
+              valor={dois(p.kpis.aguardandoValidacao)}
+              rodape="Devolvidas ao Fiscal"
+              icone={<IconClockHour4 size={20} />}
+              cor="yellow"
             />
-            <Indicador
-              rotulo="Reabertura"
-              valor={`${formatarNumero(m.resumo.taxaReabertura)}%`}
-              detalhe="Devolvidas ao menos uma vez"
+            <Kpi
+              rotulo="Concluídas no mês"
+              valor={dois(p.kpis.concluidasMes)}
+              rodape={
+                p.kpis.noPrazoMes === null
+                  ? 'Nenhuma concluída ainda'
+                  : `${p.kpis.noPrazoMes}% dentro do prazo`
+              }
+              icone={<IconCircleCheck size={20} />}
+              cor="green"
             />
           </SimpleGrid>
 
-          <Card>
-            <Title order={4}>Setores que mais seguram notas</Title>
-            <Text fz="xs" c="dimmed" mb="md">
-              Soma das horas corridas que as notas ficaram com cada setor.
-            </Text>
-            <BarChart
-              h={Math.max(160, m.porSetor.length * 44)}
-              data={m.porSetor.map((s) => ({ setor: s.nome, horas: s.horasTotais }))}
-              dataKey="setor"
-              orientation="vertical"
-              series={[{ name: 'horas', label: 'Horas', color: COR_SERIE }]}
-              valueFormatter={(v) => formatarDuracao(v)}
-              gridAxis="none"
-              withXAxis={false}
-              yAxisProps={{ width: 110 }}
-              barProps={{ radius: 4, maxBarSize: 28 }}
-              withBarValueLabel
-            />
-            <TabelaTempo linhas={m.porSetor} rotulo="Setor" />
-          </Card>
-
-          <Grid>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <Card h="100%">
-                <Title order={4}>Idade das notas abertas</Title>
-                <Text fz="xs" c="dimmed" mb="md">
-                  Quantas pendências estão abertas há quanto tempo.
-                </Text>
-                <BarChart
-                  h={220}
-                  data={m.faixasIdade}
-                  dataKey="faixa"
-                  series={[{ name: 'quantidade', label: 'Notas', color: COR_SERIE }]}
-                  gridAxis="y"
-                  yAxisProps={{ allowDecimals: false, width: 32 }}
-                  barProps={{ radius: 4, maxBarSize: 28 }}
-                  withBarValueLabel
-                />
-              </Card>
+          <Grid gap="lg">
+            <Grid.Col span={{ base: 12, lg: 7 }}>
+              <Stack gap="lg">
+                <Quadro
+                  titulo="Pendências que exigem atenção"
+                  extra={
+                    <Anchor fz="sm" fw={700} c="itaxRed" onClick={() => navigate('/divergencias')}>
+                      Ver todas →
+                    </Anchor>
+                  }
+                >
+                  {p.atencao.length === 0 ? (
+                    <Vazio titulo="Nenhuma pendência aberta" />
+                  ) : (
+                    <Stack gap={0}>
+                      {p.atencao.map((a, i) => (
+                        <Group
+                          key={a.id}
+                          gap="md"
+                          py="sm"
+                          wrap="nowrap"
+                          className="linha-clicavel"
+                          onClick={() => navigate(`/divergencias/${a.id}`)}
+                          style={{ borderTop: i ? '1px solid var(--mantine-color-gray-2)' : undefined }}
+                        >
+                          <Text fz="xs" fw={800} c="dimmed" w={96} style={{ flexShrink: 0 }}>
+                            {a.protocolo}
+                          </Text>
+                          <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                            <Group gap={6} wrap="nowrap">
+                              <Text fz="sm" fw={700} truncate>
+                                NF {a.numeroNf} • {a.fornecedor}
+                              </Text>
+                              <BadgePrioridade prioridade={a.prioridade} />
+                            </Group>
+                            <Text fz="xs" c="dimmed" truncate>
+                              {a.tipo} · {a.setor} · prazo {formatarDia(a.prazo)}
+                            </Text>
+                          </Stack>
+                          <BadgeDivergencia status={a.status} atrasada={a.atrasada} />
+                        </Group>
+                      ))}
+                    </Stack>
+                  )}
+                </Quadro>
+                <Quadro
+                  titulo="Volume de divergências por dia"
+                  extra={
+                    <Text fz="xs" c="dimmed">
+                      Últimos 12 dias úteis
+                    </Text>
+                  }
+                >
+                  <BarChart
+                    h={220}
+                    data={p.volumePorDia.map((v) => ({
+                      dia: formatarDia(v.dia).slice(0, 5),
+                      Novas: v.quantidade,
+                    }))}
+                    dataKey="dia"
+                    series={[{ name: 'Novas', color: 'dark.4', label: 'Novas divergências' }]}
+                    tickLine="none"
+                    gridAxis="y"
+                    barProps={{ radius: 4 }}
+                    yAxisProps={{ allowDecimals: false, width: 30 }}
+                  />
+                </Quadro>
+              </Stack>
             </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <Card h="100%">
-                <Title order={4}>Divergências mais comuns</Title>
-                <Text fz="xs" c="dimmed" mb="md">
-                  Quantidade por tipo no período.
-                </Text>
-                <BarChart
-                  h={Math.max(160, m.porTipo.length * 40)}
-                  data={m.porTipo}
-                  dataKey="tipo"
-                  orientation="vertical"
-                  series={[{ name: 'quantidade', label: 'Divergências', color: COR_SERIE }]}
-                  gridAxis="none"
-                  withXAxis={false}
-                  yAxisProps={{ width: 170 }}
-                  barProps={{ radius: 4, maxBarSize: 28 }}
-                  withBarValueLabel
-                />
-              </Card>
+            <Grid.Col span={{ base: 12, lg: 5 }}>
+              <Stack gap="lg">
+                <Quadro
+                  titulo="Principais origens"
+                  extra={
+                    <Text fz="xs" c="dimmed">
+                      Últimos 30 dias
+                    </Text>
+                  }
+                >
+                  {p.principaisOrigens.length === 0 ? (
+                    <Vazio titulo="Sem divergências no período" />
+                  ) : (
+                    p.principaisOrigens.map((o) => (
+                      <BarraHorizontal
+                        key={o.tipo}
+                        rotulo={o.tipo}
+                        valor={`${o.percentual}%`}
+                        percentual={o.percentual}
+                      />
+                    ))
+                  )}
+                </Quadro>
+                <Quadro titulo="SLA das tratativas">
+                  <SimpleGrid cols={2}>
+                    <Estatistica
+                      valor={formatarDias(p.sla.diasMediosResolucao)}
+                      legenda="Tempo médio de solução"
+                    />
+                    <Estatistica
+                      valor={dois(p.sla.vencidas)}
+                      legenda="Tratativas vencidas"
+                      cor={p.sla.vencidas ? 'itaxRed' : undefined}
+                    />
+                    <Estatistica
+                      valor={formatarPercentual(p.sla.responsaveisAtribuidos)}
+                      legenda="Responsáveis atribuídos"
+                    />
+                    <Estatistica valor={formatarPercentual(p.sla.taxaReabertura)} legenda="Reabertura" />
+                  </SimpleGrid>
+                  <Text fz="xs" c="dimmed" mt="md">
+                    Calculado sobre as divergências gravadas no sistema.
+                  </Text>
+                </Quadro>
+              </Stack>
             </Grid.Col>
           </Grid>
-
-          <Card>
-            <Title order={4} mb="sm">
-              Tempo por responsável
-            </Title>
-            <TabelaTempo linhas={m.porResponsavel} rotulo="Responsável" />
-          </Card>
-        </>
+        </Stack>
       )}
-    </Stack>
+    </>
   );
 }

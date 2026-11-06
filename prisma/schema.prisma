@@ -1,4 +1,4 @@
-// Modelagem do Nexo — controle de NF-es divergentes.
+// Modelagem do ITAX | Fluxo Fiscal — central de divergências de notas fiscais.
 // Padrão ITAX: modelos e campos em português, sem acento; alterações só por migração.
 
 generator client {
@@ -13,83 +13,138 @@ datasource db {
   schemas  = ["nexo"]
 }
 
+/// Fiscal: cadastra, encaminha, valida e reabre. Tratador: responde o que lhe foi designado.
+/// Gestor: redistribui, supervisiona e consulta relatórios. Admin: usuários, setores, tipos e SLA.
 enum Perfil {
+  FISCAL
+  TRATADOR
+  GESTOR
   ADMIN
-  REVISOR
-  RESPONSAVEL
+
+  @@schema("nexo")
+}
+
+enum OrigemNota {
+  XML
+  MANUAL
+  CSV
 
   @@schema("nexo")
 }
 
 enum StatusNota {
-  IMPORTADA // sem pendência aberta
-  EM_AJUSTE // possui ao menos uma divergência não resolvida
-  AJUSTADA // teve divergências e todas foram resolvidas
+  SEM_PENDENCIA // nenhuma divergência registrada
+  EM_AJUSTE // ao menos uma divergência não concluída
+  AJUSTADA // teve divergências e todas foram concluídas
 
   @@schema("nexo")
 }
 
+/// "Atrasada" não é status: é derivado do prazo vencido enquanto está com o setor.
 enum StatusDivergencia {
-  PENDENTE // com o responsável, aguardando retorno
-  AGUARDANDO_REVISAO // responsável respondeu; aguardando o solicitante aceitar ou devolver
-  RESOLVIDA
+  PENDENTE // enviada ao setor, aguardando o responsável assumir
+  EM_TRATAMENTO // responsável assumiu (ou foi reaberta para ele)
+  DEVOLVIDA // devolvida ao Fiscal, aguardando validação
+  CONCLUIDA // validada pelo Fiscal/gestor
 
   @@schema("nexo")
 }
 
-enum TipoMensagem {
-  SOLICITACAO
-  JUSTIFICATIVA
-  CORRECAO
-  REPASSE
+enum Prioridade {
+  NORMAL
+  ALTA
+  CRITICA
+
+  @@schema("nexo")
+}
+
+enum AcaoMovimentacao {
+  CADASTRO
+  ASSUNCAO
   DEVOLUCAO
-  ACEITE
+  CONCLUSAO
+  REABERTURA
+  REDISTRIBUICAO
 
   @@schema("nexo")
 }
 
 enum MotivoFimAtribuicao {
-  RESPONDIDA
-  REPASSADA
+  DEVOLVIDA
+  REDISTRIBUIDA
+
+  @@schema("nexo")
+}
+
+enum CategoriaAnexo {
+  APOIO // documento enviado pelo Fiscal no cadastro
+  EVIDENCIA // comprovação enviada pelo setor na devolutiva
+
+  @@schema("nexo")
+}
+
+enum EventoNotificacao {
+  NOVA_ATRIBUICAO
+  DEVOLUCAO
+  PRAZO_PROXIMO
+  ESCALONAMENTO
+
+  @@schema("nexo")
+}
+
+enum SituacaoNotificacao {
+  NAO_ENVIADA // registrada; o canal de e-mail ainda não está configurado
+  ENVIADA
+  FALHA
 
   @@schema("nexo")
 }
 
 model Setor {
-  id          Int          @id @default(autoincrement())
-  nome        String       @unique
-  ativo       Boolean      @default(true)
-  criadoEm    DateTime     @default(now())
-  usuarios    Usuario[]
-  atribuicoes Atribuicao[]
+  id           Int               @id @default(autoincrement())
+  nome         String            @unique
+  descricao    String?
+  /// Prazo padrão, em dias corridos, quando a divergência é cadastrada sem prazo.
+  slaDias      Int               @default(2)
+  ativo        Boolean           @default(true)
+  criadoEm     DateTime          @default(now())
+  usuarios     Usuario[]
+  atribuicoes  Atribuicao[]
+  divergencias Divergencia[]
+  tipos        TipoDivergencia[]
 
   @@schema("nexo")
 }
 
 model Usuario {
-  id          Int           @id @default(autoincrement())
-  nome        String
-  email       String        @unique
-  senhaHash   String
-  perfil      Perfil        @default(RESPONSAVEL)
-  ativo       Boolean       @default(true)
-  setorId     Int?
-  setor       Setor?        @relation(fields: [setorId], references: [id])
-  criadoEm    DateTime      @default(now())
-  importacoes Importacao[]
-  solicitadas Divergencia[] @relation("Solicitante")
-  pendentes   Divergencia[] @relation("ResponsavelAtual")
-  atribuicoes Atribuicao[]
-  mensagens   Mensagem[]
+  id            Int            @id @default(autoincrement())
+  nome          String
+  email         String         @unique
+  senhaHash     String
+  perfil        Perfil         @default(TRATADOR)
+  ativo         Boolean        @default(true)
+  setorId       Int?
+  setor         Setor?         @relation(fields: [setorId], references: [id])
+  criadoEm      DateTime       @default(now())
+  importacoes   Importacao[]
+  solicitadas   Divergencia[]  @relation("Solicitante")
+  pendentes     Divergencia[]  @relation("ResponsavelAtual")
+  atribuicoes   Atribuicao[]
+  movimentacoes Movimentacao[] @relation("Autor")
+  destinos      Movimentacao[] @relation("Destino")
+  anexos        Anexo[]
+  notificacoes  Notificacao[]
 
   @@schema("nexo")
 }
 
 model Importacao {
   id              Int          @id @default(autoincrement())
+  origem          OrigemNota
   usuarioId       Int
   usuario         Usuario      @relation(fields: [usuarioId], references: [id])
   criadaEm        DateTime     @default(now())
+  /// XML: arquivos enviados; CSV: linhas do arquivo.
   totalArquivos   Int
   totalImportadas Int
   totalDuplicadas Int
@@ -99,65 +154,100 @@ model Importacao {
   @@schema("nexo")
 }
 
+/// Dados originais da NF. Correções ficam na divergência e nas movimentações, nunca aqui.
 model NotaFiscal {
   id               Int           @id @default(autoincrement())
-  chaveAcesso      String        @unique @db.Char(44)
+  chaveAcesso      String?       @unique @db.Char(44)
   numero           String
   serie            String
-  modelo           String
-  dataEmissao      DateTime
+  modelo           String?
+  dataEmissao      DateTime?
   emitenteCnpj     String
   emitenteNome     String
   destinatarioDoc  String?
   destinatarioNome String?
   valorTotal       Decimal       @db.Decimal(15, 2)
   naturezaOperacao String?
-  xml              String
-  status           StatusNota    @default(IMPORTADA)
-  importacaoId     Int
-  importacao       Importacao    @relation(fields: [importacaoId], references: [id])
+  pedidoCompra     String?
+  unidade          String?
+  centroCusto      String?
+  xml              String?
+  origem           OrigemNota
+  status           StatusNota    @default(SEM_PENDENCIA)
+  importacaoId     Int?
+  importacao       Importacao?   @relation(fields: [importacaoId], references: [id])
   criadaEm         DateTime      @default(now())
   divergencias     Divergencia[]
 
+  @@unique([emitenteCnpj, serie, numero])
   @@index([status])
-  @@index([emitenteCnpj])
   @@schema("nexo")
 }
 
 model TipoDivergencia {
-  id           Int           @id @default(autoincrement())
-  nome         String        @unique
-  ativo        Boolean       @default(true)
-  divergencias Divergencia[]
+  id            Int           @id @default(autoincrement())
+  nome          String        @unique
+  /// Setor que normalmente origina/corrige este motivo (Suprimentos, Fiscal, Financeiro, Obras...).
+  setorOrigemId Int?
+  setorOrigem   Setor?        @relation(fields: [setorOrigemId], references: [id])
+  ativo         Boolean       @default(true)
+  divergencias  Divergencia[]
 
   @@schema("nexo")
 }
 
 model Divergencia {
   id                 Int               @id @default(autoincrement())
+  /// Identificador estável no formato DF-AAAA-NNNN.
+  protocolo          String            @unique
   notaFiscalId       Int
   notaFiscal         NotaFiscal        @relation(fields: [notaFiscalId], references: [id])
   tipoId             Int
   tipo               TipoDivergencia   @relation(fields: [tipoId], references: [id])
   descricao          String
+  /// Comparativo opcional: o que veio na NF, o que era esperado e a correção esperada.
+  valorNf            String?
+  valorEsperado      String?
+  correcaoEsperada   String?
+  prioridade         Prioridade        @default(NORMAL)
+  prazo              DateTime          @db.Date
   status             StatusDivergencia @default(PENDENTE)
+  setorId            Int
+  setor              Setor             @relation(fields: [setorId], references: [id])
   solicitanteId      Int
   solicitante        Usuario           @relation("Solicitante", fields: [solicitanteId], references: [id])
   responsavelAtualId Int?
   responsavelAtual   Usuario?          @relation("ResponsavelAtual", fields: [responsavelAtualId], references: [id])
+  /// Última devolutiva do setor e rascunho em edição pelo responsável.
+  devolutiva         String?
+  tipoSolucao        String?
+  rascunho           String?
+  parecer            String?
+  reaberturas        Int               @default(0)
   abertaEm           DateTime          @default(now())
-  resolvidaEm        DateTime?
+  devolvidaEm        DateTime?
+  concluidaEm        DateTime?
   atribuicoes        Atribuicao[]
-  mensagens          Mensagem[]
+  movimentacoes      Movimentacao[]
+  anexos             Anexo[]
+  notificacoes       Notificacao[]
 
   @@index([status])
   @@index([responsavelAtualId, status])
-  @@index([solicitanteId, status])
+  @@index([setorId, status])
+  @@index([notaFiscalId, tipoId])
   @@schema("nexo")
 }
 
-// Cada período em que a divergência ficou com um responsável.
-// A soma dos períodos dá o tempo por pessoa e por setor.
+model SequenciaProtocolo {
+  ano    Int @id
+  ultimo Int
+
+  @@schema("nexo")
+}
+
+/// Cada período em que a divergência ficou com um responsável.
+/// A soma dos períodos dá o tempo por pessoa e por setor.
 model Atribuicao {
   id            Int                  @id @default(autoincrement())
   divergenciaId Int
@@ -176,16 +266,72 @@ model Atribuicao {
   @@schema("nexo")
 }
 
-model Mensagem {
-  id            Int          @id @default(autoincrement())
-  divergenciaId Int
-  divergencia   Divergencia  @relation(fields: [divergenciaId], references: [id])
-  autorId       Int
-  autor         Usuario      @relation(fields: [autorId], references: [id])
-  tipo          TipoMensagem
-  texto         String
-  criadaEm      DateTime     @default(now())
+/// Trilha de auditoria: toda ação grava usuário, data/hora do servidor, status anterior/novo e texto.
+model Movimentacao {
+  id             Int                @id @default(autoincrement())
+  divergenciaId  Int
+  divergencia    Divergencia        @relation(fields: [divergenciaId], references: [id])
+  autorId        Int
+  autor          Usuario            @relation("Autor", fields: [autorId], references: [id])
+  acao           AcaoMovimentacao
+  statusAnterior StatusDivergencia?
+  statusNovo     StatusDivergencia
+  texto          String
+  destinoId      Int?
+  destino        Usuario?           @relation("Destino", fields: [destinoId], references: [id])
+  setorDestino   String?
+  prazoAnterior  DateTime?          @db.Date
+  prazoNovo      DateTime?          @db.Date
+  criadaEm       DateTime           @default(now())
+  anexos         Anexo[]
 
   @@index([divergenciaId])
+  @@schema("nexo")
+}
+
+model Anexo {
+  id             Int            @id @default(autoincrement())
+  divergenciaId  Int
+  divergencia    Divergencia    @relation(fields: [divergenciaId], references: [id])
+  movimentacaoId Int?
+  movimentacao   Movimentacao?  @relation(fields: [movimentacaoId], references: [id])
+  usuarioId      Int
+  usuario        Usuario        @relation(fields: [usuarioId], references: [id])
+  categoria      CategoriaAnexo
+  nomeArquivo    String
+  tipoConteudo   String
+  tamanho        Int
+  /// SHA-256 do conteúdo, para conferir a integridade do arquivo.
+  sha256         String         @db.Char(64)
+  conteudo       Bytes
+  criadoEm       DateTime       @default(now())
+
+  @@index([divergenciaId])
+  @@schema("nexo")
+}
+
+model Notificacao {
+  id             Int                 @id @default(autoincrement())
+  evento         EventoNotificacao
+  divergenciaId  Int?
+  divergencia    Divergencia?        @relation(fields: [divergenciaId], references: [id])
+  destinatarioId Int
+  destinatario   Usuario             @relation(fields: [destinatarioId], references: [id])
+  canal          String              @default("EMAIL")
+  assunto        String
+  situacao       SituacaoNotificacao
+  detalhe        String?
+  criadaEm       DateTime            @default(now())
+  enviadaEm      DateTime?
+  lidaEm         DateTime?
+
+  @@index([destinatarioId, lidaEm])
+  @@schema("nexo")
+}
+
+model ConfigNotificacao {
+  evento EventoNotificacao @id
+  ativo  Boolean
+
   @@schema("nexo")
 }

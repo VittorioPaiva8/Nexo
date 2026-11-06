@@ -14,14 +14,21 @@ export class SetoresController {
   @Get()
   @ApiOperation({ summary: 'Lista os setores' })
   listar() {
-    return this.prisma.setor.findMany({ orderBy: { nome: 'asc' } });
+    return this.prisma.setor.findMany({
+      orderBy: { nome: 'asc' },
+      include: { _count: { select: { usuarios: { where: { ativo: true } } } } },
+    });
   }
 
   @Post()
   @Perfis('ADMIN')
   @ApiOperation({ summary: 'Cria um setor' })
   async criar(@Body() dto: CriarSetorDto) {
-    return this.salvar(() => this.prisma.setor.create({ data: { nome: dto.nome.trim() } }));
+    return this.salvar(() =>
+      this.prisma.setor.create({
+        data: { nome: dto.nome.trim(), descricao: dto.descricao?.trim() || null, slaDias: dto.slaDias },
+      }),
+    );
   }
 
   @Patch(':id')
@@ -29,7 +36,15 @@ export class SetoresController {
   @ApiOperation({ summary: 'Atualiza ou desativa um setor' })
   async atualizar(@Param('id', ParseIntPipe) id: number, @Body() dto: AtualizarSetorDto) {
     return this.salvar(() =>
-      this.prisma.setor.update({ where: { id }, data: { nome: dto.nome?.trim(), ativo: dto.ativo } }),
+      this.prisma.setor.update({
+        where: { id },
+        data: {
+          nome: dto.nome?.trim(),
+          descricao: dto.descricao?.trim(),
+          slaDias: dto.slaDias,
+          ativo: dto.ativo,
+        },
+      }),
     );
   }
 

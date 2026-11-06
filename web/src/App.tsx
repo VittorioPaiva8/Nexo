@@ -4,14 +4,18 @@ import type { Perfil } from './api/tipos';
 import { useAuth } from './auth/AuthContext';
 import { Carregando } from './components/Estado';
 import { Layout } from './components/Layout';
-import { Acompanhamento } from './pages/Acompanhamento';
-import { Cadastros } from './pages/Cadastros';
+import { Central } from './pages/Central';
 import { DivergenciaDetalhe } from './pages/DivergenciaDetalhe';
 import { Importar } from './pages/Importar';
 import { Login } from './pages/Login';
-import { MinhasPendencias } from './pages/MinhasPendencias';
-import { Notas } from './pages/Notas';
+import { MinhasTratativas } from './pages/MinhasTratativas';
+import { NovaDivergencia } from './pages/NovaDivergencia';
 import { Painel } from './pages/Painel';
+import { Relatorios } from './pages/Relatorios';
+import { Usuarios } from './pages/Usuarios';
+import { Validacao } from './pages/Validacao';
+
+const FISCAIS: Perfil[] = ['FISCAL', 'GESTOR', 'ADMIN'];
 
 function Protegida({ children, perfis }: { children: ReactNode; perfis?: Perfil[] }) {
   const { usuario, carregando, temPerfil } = useAuth();
@@ -21,12 +25,13 @@ function Protegida({ children, perfis }: { children: ReactNode; perfis?: Perfil[
   return <>{children}</>;
 }
 
+/** Fiscal, gestor e admin começam no painel; o tratador, na própria fila. */
 function Inicio() {
   const { temPerfil } = useAuth();
-  return <Navigate to={temPerfil('ADMIN', 'REVISOR') ? '/acompanhamento' : '/pendencias'} replace />;
+  return <Navigate to={temPerfil(...FISCAIS) ? '/painel' : '/tratativas'} replace />;
 }
 
-const GESTAO: Perfil[] = ['ADMIN', 'REVISOR'];
+const restrita = (perfis: Perfil[], pagina: ReactNode) => <Protegida perfis={perfis}>{pagina}</Protegida>;
 
 export function App() {
   return (
@@ -41,48 +46,15 @@ export function App() {
           }
         >
           <Route index element={<Inicio />} />
-          <Route path="pendencias" element={<MinhasPendencias />} />
+          <Route path="painel" element={restrita(FISCAIS, <Painel />)} />
+          <Route path="divergencias" element={<Central />} />
           <Route path="divergencias/:id" element={<DivergenciaDetalhe />} />
-          <Route
-            path="importar"
-            element={
-              <Protegida perfis={GESTAO}>
-                <Importar />
-              </Protegida>
-            }
-          />
-          <Route
-            path="notas"
-            element={
-              <Protegida perfis={GESTAO}>
-                <Notas />
-              </Protegida>
-            }
-          />
-          <Route
-            path="acompanhamento"
-            element={
-              <Protegida perfis={GESTAO}>
-                <Acompanhamento />
-              </Protegida>
-            }
-          />
-          <Route
-            path="painel"
-            element={
-              <Protegida perfis={GESTAO}>
-                <Painel />
-              </Protegida>
-            }
-          />
-          <Route
-            path="cadastros"
-            element={
-              <Protegida perfis={['ADMIN']}>
-                <Cadastros />
-              </Protegida>
-            }
-          />
+          <Route path="nova" element={restrita(FISCAIS, <NovaDivergencia />)} />
+          <Route path="importar" element={restrita(FISCAIS, <Importar />)} />
+          <Route path="tratativas" element={<MinhasTratativas />} />
+          <Route path="validacao" element={restrita(FISCAIS, <Validacao />)} />
+          <Route path="relatorios" element={restrita(FISCAIS, <Relatorios />)} />
+          <Route path="usuarios" element={restrita(['ADMIN'], <Usuarios />)} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

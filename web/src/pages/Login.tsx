@@ -40,7 +40,7 @@ export function Login() {
         <Stack gap={6} align="center">
           <Marca tamanho="xl" />
           <Text c={CORES_ITAX.cinzaClaro} fz="sm" ta="center">
-            Controle de NF-es divergentes
+            Central de divergências de notas fiscais
           </Text>
         </Stack>
         <Paper
@@ -61,7 +61,7 @@ export function Login() {
               )}
               <TextInput
                 label="E-mail"
-                placeholder="voce@itax.com.br"
+                placeholder="voce@empresa.com.br"
                 autoComplete="email"
                 styles={{ label: { color: 'white' } }}
                 {...form.getInputProps('email')}

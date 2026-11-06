@@ -14,14 +14,21 @@ export class TiposDivergenciaController {
   @Get()
   @ApiOperation({ summary: 'Lista os tipos de divergência' })
   listar() {
-    return this.prisma.tipoDivergencia.findMany({ orderBy: { nome: 'asc' } });
+    return this.prisma.tipoDivergencia.findMany({
+      orderBy: { nome: 'asc' },
+      include: { setorOrigem: { select: { id: true, nome: true } } },
+    });
   }
 
   @Post()
   @Perfis('ADMIN')
   @ApiOperation({ summary: 'Cria um tipo de divergência' })
   async criar(@Body() dto: CriarTipoDivergenciaDto) {
-    return this.salvar(() => this.prisma.tipoDivergencia.create({ data: { nome: dto.nome.trim() } }));
+    return this.salvar(() =>
+      this.prisma.tipoDivergencia.create({
+        data: { nome: dto.nome.trim(), setorOrigemId: dto.setorOrigemId },
+      }),
+    );
   }
 
   @Patch(':id')
@@ -31,7 +38,7 @@ export class TiposDivergenciaController {
     return this.salvar(() =>
       this.prisma.tipoDivergencia.update({
         where: { id },
-        data: { nome: dto.nome?.trim(), ativo: dto.ativo },
+        data: { nome: dto.nome?.trim(), setorOrigemId: dto.setorOrigemId, ativo: dto.ativo },
       }),
     );
   }

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { formatarChave, formatarCnpj, formatarData, formatarDuracao, formatarMoeda } from './formato';
+import {
+  formatarChave,
+  formatarCnpj,
+  formatarData,
+  formatarDia,
+  formatarDias,
+  formatarDuracao,
+  formatarMoeda,
+} from './formato';
 
 describe('formatação no padrão brasileiro', () => {
   it('data em DD/MM/AAAA', () => expect(formatarData('2026-11-06T12:00:00')).toBe('06/11/2026'));
@@ -15,5 +23,10 @@ describe('formatação no padrão brasileiro', () => {
     expect(formatarDuracao(52)).toBe('2 d 4 h');
     expect(formatarDuracao(48)).toBe('2 d');
     expect(formatarDuracao(null)).toBe('—');
+  });
+  it('prazo sem deslocar o fuso', () => expect(formatarDia('2026-11-07T00:00:00.000Z')).toBe('07/11/2026'));
+  it('dias', () => {
+    expect(formatarDias(1)).toBe('1 dia');
+    expect(formatarDias(1.8)).toBe('1,8 dias');
   });
 });

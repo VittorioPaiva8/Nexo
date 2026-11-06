@@ -16,6 +16,14 @@ export class UsuariosService {
       where: {
         perfil: filtro.perfil,
         setorId: filtro.setorId,
+        ...(filtro.busca
+          ? {
+              OR: [
+                { nome: { contains: filtro.busca, mode: 'insensitive' as const } },
+                { email: { contains: filtro.busca, mode: 'insensitive' as const } },
+              ],
+            }
+          : {}),
         ativo: filtro.incluirInativos ? undefined : true,
       },
       include: { setor: true },
@@ -25,8 +33,8 @@ export class UsuariosService {
   }
 
   async criar(dto: CriarUsuarioDto) {
-    if (dto.perfil === 'RESPONSAVEL' && !dto.setorId) {
-      throw new BadRequestException('Responsáveis precisam estar vinculados a um setor');
+    if (dto.perfil === 'TRATADOR' && !dto.setorId) {
+      throw new BadRequestException('Tratadores precisam estar vinculados a um setor');
     }
     const senhaHash = await bcrypt.hash(dto.senha, RODADAS_BCRYPT);
     return this.salvar(() =>

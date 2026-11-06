@@ -10,7 +10,7 @@ describe('lerXmlNfe', () => {
       numero: '1234',
       serie: '1',
       modelo: '55',
-      emitenteCnpj: '12345678000190',
+      emitenteCnpj: '12345678000195',
       emitenteNome: 'Fornecedor Exemplo Ltda',
       destinatarioDoc: '98765432000110',
       destinatarioNome: 'Grupo Itax',

@@ -46,6 +46,8 @@ jobs:
       - name: Dados iniciais (setores, tipos e usuários de teste)
         if: ${{ vars.SEED_AO_PUBLICAR != 'false' }}
         run: npx tsx prisma/seed.ts
+        env:
+          SEED_DEMO: ${{ vars.SEED_DEMO || 'true' }}
 
       - name: Build do frontend
         run: npm run build

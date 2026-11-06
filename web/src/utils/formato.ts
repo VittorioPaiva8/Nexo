@@ -34,3 +34,30 @@ export function formatarCnpj(doc: string | null | undefined): string {
 
 /** Chave de acesso em blocos de 4 dígitos, como no DANFE. */
 export const formatarChave = (chave: string) => chave.replace(/(\d{4})(?=\d)/g, '$1 ');
+
+/** Datas sem horário (prazo) vêm como meia-noite UTC: formatar só a parte da data. */
+export function formatarDia(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const [a, m, d] = iso.slice(0, 10).split('-');
+  return `${d}/${m}/${a}`;
+}
+
+/** "1,8 dia" / "3 dias". */
+export function formatarDias(dias: number): string {
+  const n = numero.format(dias);
+  return `${n} ${dias > 0 && dias <= 1 ? 'dia' : 'dias'}`;
+}
+
+export const formatarPercentual = (p: number | null | undefined) =>
+  p === null || p === undefined ? '—' : `${p}%`;
+
+/** "AAAA-MM-DD" de hoje no fuso do navegador. */
+export function hoje(): string {
+  return dayjs().format('YYYY-MM-DD');
+}
+
+export function formatarTamanho(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${numero.format(bytes / 1024 / 1024)} MB`;
+}

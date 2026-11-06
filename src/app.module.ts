@@ -7,8 +7,10 @@ import { EnvelopeInterceptor } from './common/envelope.interceptor.js';
 import { HttpExceptionFilter } from './common/http-exception.filter.js';
 import { PerfisGuard } from './common/perfis.guard.js';
 import { DivergenciasModule } from './divergencias/divergencias.module.js';
+import { ImportacoesModule } from './importacoes/importacoes.module.js';
 import { MetricasModule } from './metricas/metricas.module.js';
 import { NotasModule } from './notas/notas.module.js';
+import { NotificacoesModule } from './notificacoes/notificacoes.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { SetoresModule } from './setores/setores.module.js';
 import { TiposDivergenciaModule } from './tipos-divergencia/tipos-divergencia.module.js';
@@ -23,7 +25,9 @@ import { UsuariosModule } from './usuarios/usuarios.module.js';
     SetoresModule,
     TiposDivergenciaModule,
     NotasModule,
+    NotificacoesModule,
     DivergenciasModule,
+    ImportacoesModule,
     MetricasModule,
   ],
   providers: [

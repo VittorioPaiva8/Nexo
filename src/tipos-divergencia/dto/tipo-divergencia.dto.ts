@@ -1,21 +1,31 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CriarTipoDivergenciaDto {
-  @ApiProperty({ example: 'Valor divergente do pedido' })
+  @ApiProperty({ example: 'Sem pedido de compra' })
   @IsString()
   @MinLength(2)
   @MaxLength(120)
   nome: string;
+
+  @ApiPropertyOptional({ description: 'Setor de origem do motivo (Suprimentos, Fiscal, Financeiro...)' })
+  @IsOptional()
+  @IsInt()
+  setorOrigemId?: number;
 }
 
 export class AtualizarTipoDivergenciaDto {
-  @ApiPropertyOptional({ example: 'Valor divergente do pedido' })
+  @ApiPropertyOptional({ example: 'Sem pedido de compra' })
   @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(120)
   nome?: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsInt()
+  setorOrigemId?: number | null;
 
   @ApiPropertyOptional()
   @IsOptional()

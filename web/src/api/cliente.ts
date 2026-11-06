@@ -1,6 +1,6 @@
 // VITE_API_URL pode ser absoluto (http://localhost:3000) ou relativo ao site (/api, como no Cloudflare).
 const BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
-const CHAVE_TOKEN = 'nexo.token';
+const CHAVE_TOKEN = 'fluxo-fiscal.token';
 
 export class ErroApi extends Error {
   constructor(
@@ -75,6 +75,8 @@ export const api = {
     chamar<{ data: T }>('POST', caminho, { corpo }).then((r) => r.data),
   patch: <T>(caminho: string, corpo?: unknown) =>
     chamar<{ data: T }>('PATCH', caminho, { corpo }).then((r) => r.data),
+  put: <T>(caminho: string, corpo?: unknown) =>
+    chamar<{ data: T }>('PUT', caminho, { corpo }).then((r) => r.data),
   urlXml: (notaId: number) => montarUrl(`/notas/${notaId}/xml`),
   baixar: async (caminho: string, nomeArquivo: string) => {
     const res = await fetch(montarUrl(caminho), {

@@ -1,39 +1,91 @@
-import { Badge } from '@mantine/core';
-import type { Perfil, StatusDivergencia, StatusNota, TipoMensagem } from '../api/tipos';
+import { Badge, Group } from '@mantine/core';
+import type { AcaoMovimentacao, Perfil, Prioridade, StatusDivergencia, StatusNota } from '../api/tipos';
 
-// Vermelho só para o que é crítico/pendente; verde e amarelo para sucesso e atenção (manual, seção 6).
-const STATUS_DIVERGENCIA: Record<StatusDivergencia, { rotulo: string; cor: string }> = {
-  PENDENTE: { rotulo: 'Pendente', cor: 'itaxRed' },
-  AGUARDANDO_REVISAO: { rotulo: 'Aguardando revisão', cor: 'yellow' },
-  RESOLVIDA: { rotulo: 'Resolvida', cor: 'green' },
+// Vermelho só para o que é crítico (vencido, prioridade crítica); demais status em cores neutras.
+export const STATUS_DIVERGENCIA: Record<StatusDivergencia, { rotulo: string; cor: string }> = {
+  PENDENTE: { rotulo: 'Pendente', cor: 'orange' },
+  EM_TRATAMENTO: { rotulo: 'Em tratamento', cor: 'blue' },
+  DEVOLVIDA: { rotulo: 'Devolvida ao Fiscal', cor: 'violet' },
+  CONCLUIDA: { rotulo: 'Concluída', cor: 'green' },
 };
 
 const STATUS_NOTA: Record<StatusNota, { rotulo: string; cor: string }> = {
-  IMPORTADA: { rotulo: 'Sem pendência', cor: 'gray' },
-  EM_AJUSTE: { rotulo: 'Em ajuste', cor: 'itaxRed' },
+  SEM_PENDENCIA: { rotulo: 'Sem divergência', cor: 'gray' },
+  EM_AJUSTE: { rotulo: 'Em ajuste', cor: 'orange' },
   AJUSTADA: { rotulo: 'Ajustada', cor: 'green' },
 };
 
 export const ROTULO_PERFIL: Record<Perfil, string> = {
-  ADMIN: 'Administrador',
-  REVISOR: 'Revisor',
-  RESPONSAVEL: 'Responsável',
+  FISCAL: 'Fiscal',
+  TRATADOR: 'Tratador',
+  GESTOR: 'Gestor',
+  ADMIN: 'Admin',
 };
 
-export const ROTULO_MENSAGEM: Record<TipoMensagem, string> = {
-  SOLICITACAO: 'Solicitou ajuste',
-  JUSTIFICATIVA: 'Justificou',
-  CORRECAO: 'Corrigiu',
-  REPASSE: 'Repassou',
-  DEVOLUCAO: 'Devolveu',
-  ACEITE: 'Aceitou',
+export const DESCRICAO_PERFIL: Record<Perfil, string> = {
+  FISCAL: 'Cadastrar, encaminhar, validar e reabrir',
+  TRATADOR: 'Responder somente o que lhe foi designado',
+  GESTOR: 'Redistribuir, supervisionar e consultar relatórios',
+  ADMIN: 'Configurar usuários, setores, tipos e SLA',
 };
 
-export function BadgeDivergencia({ status }: { status: StatusDivergencia }) {
+export const ROTULO_PRIORIDADE: Record<Prioridade, string> = {
+  NORMAL: 'Normal',
+  ALTA: 'Alta',
+  CRITICA: 'Crítica',
+};
+
+export const ROTULO_ACAO: Record<AcaoMovimentacao, string> = {
+  CADASTRO: 'Ocorrência cadastrada e enviada ao setor',
+  ASSUNCAO: 'Em tratamento',
+  DEVOLUCAO: 'Devolvida ao Fiscal',
+  CONCLUSAO: 'Validada e concluída',
+  REABERTURA: 'Reaberta pelo Fiscal',
+  REDISTRIBUICAO: 'Redistribuída',
+};
+
+export const TIPOS_SOLUCAO = [
+  'Pedido de compra corrigido',
+  'Cadastro regularizado',
+  'NF substituída / cancelada',
+  'Carta de correção emitida',
+  'Requer ajuste fiscal',
+  'Justificativa sem alteração',
+];
+
+export const UNIDADES = ['Cascavel', 'Guarapuava', 'Matelândia', 'Francisco Beltrão'];
+
+const SEM_CORTE = { flexShrink: 0, maxWidth: 'none' } as const;
+const ROTULO_INTEIRO = { label: { overflow: 'visible' } } as const;
+
+export function BadgeDivergencia({ status, atrasada }: { status: StatusDivergencia; atrasada?: boolean }) {
   const s = STATUS_DIVERGENCIA[status];
   return (
-    <Badge color={s.cor} variant="light">
-      {s.rotulo}
+    <Group gap={4}>
+      <Badge color={s.cor} variant="light" radius="xl" style={SEM_CORTE} styles={ROTULO_INTEIRO}>
+        {s.rotulo}
+      </Badge>
+      {atrasada && (
+        <Badge color="itaxRed" variant="light" radius="xl" style={SEM_CORTE} styles={ROTULO_INTEIRO}>
+          Atrasada
+        </Badge>
+      )}
+    </Group>
+  );
+}
+
+export function BadgePrioridade({ prioridade }: { prioridade: Prioridade }) {
+  if (prioridade === 'NORMAL') return null;
+  return (
+    <Badge
+      color={prioridade === 'CRITICA' ? 'itaxRed' : 'yellow'}
+      variant="outline"
+      radius="xl"
+      size="sm"
+      style={SEM_CORTE}
+      styles={ROTULO_INTEIRO}
+    >
+      {ROTULO_PRIORIDADE[prioridade]}
     </Badge>
   );
 }
@@ -41,7 +93,7 @@ export function BadgeDivergencia({ status }: { status: StatusDivergencia }) {
 export function BadgeNota({ status }: { status: StatusNota }) {
   const s = STATUS_NOTA[status];
   return (
-    <Badge color={s.cor} variant="light">
+    <Badge color={s.cor} variant="light" radius="xl">
       {s.rotulo}
     </Badge>
   );

@@ -1,79 +1,62 @@
 import { describe, expect, it } from 'vitest';
-import { horasEntre, proximoStatus, RegraViolada, statusDaNota, type ContextoAcao } from './regras.js';
+import { estaAtrasada, formatarProtocolo, proximoStatus, RegraViolada, statusDaNota } from './regras.js';
 
-const base: ContextoAcao = {
-  status: 'PENDENTE',
-  usuarioId: 2,
-  perfil: 'RESPONSAVEL',
-  solicitanteId: 1,
-  responsavelAtualId: 2,
-};
+const base = { usuarioId: 10, perfil: 'TRATADOR' as const, responsavelAtualId: 10 };
 
 describe('proximoStatus', () => {
-  it('responsável responde: vai para aguardando revisão', () => {
-    expect(proximoStatus('responder', base)).toBe('AGUARDANDO_REVISAO');
+  it('responsável assume e devolve ao Fiscal', () => {
+    expect(proximoStatus('assumir', { ...base, status: 'PENDENTE' })).toBe('EM_TRATAMENTO');
+    expect(proximoStatus('devolver', { ...base, status: 'EM_TRATAMENTO' })).toBe('DEVOLVIDA');
+    expect(proximoStatus('devolver', { ...base, status: 'PENDENTE' })).toBe('DEVOLVIDA');
+    expect(proximoStatus('rascunho', { ...base, status: 'EM_TRATAMENTO' })).toBe('EM_TRATAMENTO');
   });
 
-  it('outro usuário não pode responder', () => {
-    expect(() => proximoStatus('responder', { ...base, usuarioId: 3 })).toThrow(RegraViolada);
-  });
-
-  it('não responde duas vezes', () => {
-    expect(() => proximoStatus('responder', { ...base, status: 'AGUARDANDO_REVISAO' })).toThrow(
-      /aguardando revisão/,
+  it('só o responsável designado responde', () => {
+    expect(() => proximoStatus('devolver', { ...base, status: 'EM_TRATAMENTO', usuarioId: 11 })).toThrow(
+      RegraViolada,
     );
+    expect(() =>
+      proximoStatus('assumir', { ...base, status: 'PENDENTE', usuarioId: 11, perfil: 'GESTOR' }),
+    ).toThrow(/responsável designado/);
   });
 
-  it('responsável e solicitante podem repassar; terceiros não', () => {
-    expect(proximoStatus('repassar', base)).toBe('PENDENTE');
-    expect(proximoStatus('repassar', { ...base, usuarioId: 1, perfil: 'REVISOR' })).toBe('PENDENTE');
-    expect(() => proximoStatus('repassar', { ...base, usuarioId: 9 })).toThrow(RegraViolada);
-  });
-
-  it('solicitante aceita ou devolve depois da resposta', () => {
-    const ctx: ContextoAcao = { ...base, status: 'AGUARDANDO_REVISAO', usuarioId: 1, perfil: 'REVISOR' };
-    expect(proximoStatus('aceitar', ctx)).toBe('RESOLVIDA');
-    expect(proximoStatus('devolver', ctx)).toBe('PENDENTE');
-  });
-
-  it('admin pode aceitar mesmo sem ser o solicitante', () => {
-    expect(
-      proximoStatus('aceitar', { ...base, status: 'AGUARDANDO_REVISAO', usuarioId: 7, perfil: 'ADMIN' }),
-    ).toBe('RESOLVIDA');
-  });
-
-  it('responsável não pode aceitar a própria resposta', () => {
-    const erro = (() => {
-      try {
-        proximoStatus('aceitar', { ...base, status: 'AGUARDANDO_REVISAO' });
-      } catch (e) {
-        return e as RegraViolada;
-      }
-    })();
-    expect(erro?.tipo).toBe('permissao');
-  });
-
-  it('nada acontece numa divergência resolvida', () => {
-    for (const acao of ['responder', 'repassar', 'aceitar', 'devolver'] as const) {
-      expect(() => proximoStatus(acao, { ...base, status: 'RESOLVIDA', perfil: 'ADMIN' })).toThrow(
-        /resolvida/,
-      );
+  it('conclusão e reabertura são do Fiscal ou gestor, depois da devolução', () => {
+    const fiscal = { usuarioId: 1, perfil: 'FISCAL' as const, responsavelAtualId: 10 };
+    expect(proximoStatus('concluir', { ...fiscal, status: 'DEVOLVIDA' })).toBe('CONCLUIDA');
+    expect(proximoStatus('reabrir', { ...fiscal, status: 'DEVOLVIDA' })).toBe('EM_TRATAMENTO');
+    expect(proximoStatus('concluir', { ...fiscal, perfil: 'GESTOR', status: 'DEVOLVIDA' })).toBe('CONCLUIDA');
+    expect(() => proximoStatus('concluir', { ...base, status: 'DEVOLVIDA' })).toThrow(/Fiscal ou o gestor/);
+    try {
+      proximoStatus('concluir', { ...fiscal, status: 'EM_TRATAMENTO' });
+    } catch (e) {
+      expect((e as RegraViolada).tipo).toBe('estado');
     }
   });
+
+  it('redistribuição só enquanto está com o setor', () => {
+    const gestor = { usuarioId: 2, perfil: 'GESTOR' as const, responsavelAtualId: 10 };
+    expect(proximoStatus('redistribuir', { ...gestor, status: 'EM_TRATAMENTO' })).toBe('PENDENTE');
+    expect(() => proximoStatus('redistribuir', { ...gestor, status: 'CONCLUIDA' })).toThrow(/Concluída/);
+    expect(() => proximoStatus('redistribuir', { ...base, status: 'PENDENTE' })).toThrow(RegraViolada);
+  });
 });
 
-describe('statusDaNota', () => {
-  it('sem divergências continua importada', () => expect(statusDaNota([])).toBe('IMPORTADA'));
-  it('com alguma aberta fica em ajuste', () =>
-    expect(statusDaNota(['RESOLVIDA', 'PENDENTE'])).toBe('EM_AJUSTE'));
-  it('todas resolvidas fica ajustada', () =>
-    expect(statusDaNota(['RESOLVIDA', 'RESOLVIDA'])).toBe('AJUSTADA'));
-});
+describe('auxiliares', () => {
+  it('status da nota acompanha as divergências', () => {
+    expect(statusDaNota([])).toBe('SEM_PENDENCIA');
+    expect(statusDaNota(['CONCLUIDA', 'DEVOLVIDA'])).toBe('EM_AJUSTE');
+    expect(statusDaNota(['CONCLUIDA'])).toBe('AJUSTADA');
+  });
 
-describe('horasEntre', () => {
-  const agora = new Date('2026-11-06T12:00:00Z');
-  it('usa o fim quando existe', () =>
-    expect(horasEntre(new Date('2026-11-06T09:30:00Z'), new Date('2026-11-06T11:00:00Z'), agora)).toBe(1.5));
-  it('conta até agora quando está em aberto', () =>
-    expect(horasEntre(new Date('2026-11-05T12:00:00Z'), null, agora)).toBe(24));
+  it('atrasada só enquanto está com o setor', () => {
+    const prazo = new Date('2026-11-06T02:59:59.999Z');
+    const depois = new Date('2026-11-07T12:00:00Z');
+    expect(estaAtrasada('EM_TRATAMENTO', prazo, depois)).toBe(true);
+    expect(estaAtrasada('DEVOLVIDA', prazo, depois)).toBe(false);
+    expect(estaAtrasada('PENDENTE', prazo, new Date('2026-11-05T12:00:00Z'))).toBe(false);
+  });
+
+  it('formata o protocolo', () => {
+    expect(formatarProtocolo(2026, 148)).toBe('DF-2026-0148');
+  });
 });
