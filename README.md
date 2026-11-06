@@ -103,16 +103,9 @@ Usuários do seed (senha `nexo123`, ou o valor de `SEED_SENHA`): `admin@`, `fisc
 Tudo gratuito e só para teste (exceção ao guia ITAX, que prevê Fly.io):
 
 - **Banco:** PostgreSQL no **Neon**. As tabelas ficam no schema `nexo`.
-- **API:** **Render**, plano free, pelo `render.yaml` e `Dockerfile.render`. A cada deploy o container aplica as migrações e o seed antes de ligar a API. Sem uso por 15 minutos ela dorme, e o primeiro acesso depois disso leva cerca de 1 minuto.
-- **Frontend:** **Cloudflare Pages**, plano free, ligado direto ao GitHub. O `web/public/_redirects` faz as rotas da SPA funcionarem.
+- **Site e API:** um único serviço no **Render**, plano free (`render.yaml` e `Dockerfile.render`). A API responde em `/api` e o frontend no mesmo endereço (variável `SITE_DIR`). A cada deploy o container aplica as migrações e o seed antes de ligar. Sem uso por 15 minutos o serviço dorme, e o primeiro acesso depois disso leva cerca de 1 minuto.
 
-Passo a passo (uma vez só):
-
-1. **Render** → New → Blueprint → escolha este repositório. Preencha `DATABASE_URL` com a conexão do Neon (_Connection pooling_ desligado, com `sslmode=require`) e deixe `CORS_ORIGIN` em branco por enquanto. Anote o endereço da API (`https://nexo-api-xxxx.onrender.com`).
-2. **Cloudflare** → Workers & Pages → Create → Pages → Connect to Git → este repositório, branch `main`. Diretório raiz `web`, comando `npm ci && npm run build`, saída `dist`. Em variáveis de ambiente, crie `VITE_API_URL` com o endereço da API.
-3. Volte ao Render e preencha `CORS_ORIGIN` com o endereço do Pages (`https://nexo-xxxx.pages.dev`).
-
-Depois disso, cada merge na `main` publica a API e o site sozinhos.
+Para ligar (uma vez só): **Render** → New → Blueprint → escolha este repositório e preencha `DATABASE_URL` com a conexão do Neon (_Connection pooling_ desligado, com `sslmode=require`). O `JWT_SECRET` é gerado pelo Render. Depois disso, cada merge na `main` publica de novo sozinho.
 
 O workflow `publicar.yml` (Cloudflare Workers + Containers, plano pago) continua no repositório, mas só roda manualmente.
 
