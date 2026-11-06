@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+src/generated
+web/node_modules
+web/dist
+prisma/migrations
+package-lock.json
+web/package-lock.json

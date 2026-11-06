@@ -1,0 +1,27 @@
+// Publicação do Nexo no Cloudflare: frontend (arquivos estáticos) + API em container, num único endereço.
+// Exceção ao guia ITAX aprovada para o ambiente de teste (o guia prevê Fly.io para a API e o banco).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nexo",
+  "main": "cloudflare/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*"],
+  },
+  "containers": [
+    {
+      "class_name": "NexoApi",
+      "image": "./Dockerfile",
+      "instance_type": "basic",
+      "max_instances": 2,
+    },
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "NEXO_API", "class_name": "NexoApi" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NexoApi"] }],
+}

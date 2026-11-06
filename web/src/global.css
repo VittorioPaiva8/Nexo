@@ -1,0 +1,60 @@
+body {
+  background: #f5f6f8;
+}
+
+h1,
+h2 {
+  letter-spacing: -0.6px;
+}
+
+/* Itens do menu lateral escuro: ativo em vermelho Itax (ação principal). */
+.item-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  margin: 2px 0;
+  border-radius: 10px;
+  color: #bfbfbf;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.item-menu:hover {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+.item-menu.active {
+  background: #e40b18;
+  color: #ffffff;
+}
+
+/* Linhas clicáveis das tabelas e listas. */
+.linha-clicavel {
+  cursor: pointer;
+}
+.item-lista {
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.item-lista:hover {
+  background: var(--mantine-color-gray-0);
+}
+.item-lista[data-ativo='true'] {
+  background: #fff5f5;
+  border-left-color: #e40b18;
+}
+
+/* Fundo da tela de login: preto com degradê vermelho no canto inferior esquerdo (manual 5.1). */
+.fundo-login {
+  min-height: 100dvh;
+  background:
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(228, 11, 24, 0.55) 0%,
+      rgba(121, 6, 14, 0.35) 25%,
+      transparent 55%
+    ),
+    #000000;
+}

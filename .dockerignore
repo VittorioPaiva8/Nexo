@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+dist
+web/dist
+web/.env
+.env
+.env.*
+!.env.example
+.git
+coverage
+test
+docs
+cloudflare
+wrangler.jsonc
+.wrangler
