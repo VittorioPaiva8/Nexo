@@ -44,3 +44,14 @@ jobs:
         working-directory: web
       - run: npm run build
         working-directory: web
+      - name: Tipos do Worker
+        run: npx tsc -p cloudflare/tsconfig.json
+      # A mesma bateria e2e contra a API do Cloudflare Worker (cloudflare/api.ts), rodando localmente.
+      - name: Testes e2e no Worker
+        run: |
+          printf 'DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/nexo_test"\nJWT_SECRET="segredo-de-ci"\n' > .dev.vars
+          npx wrangler dev --port 8787 --ip 127.0.0.1 > wrangler-dev.log 2>&1 &
+          for i in $(seq 1 60); do curl -s -o /dev/null http://127.0.0.1:8787/ && break; sleep 2; done
+          E2E_URL=http://127.0.0.1:8787/api npm run test:e2e || { cat wrangler-dev.log; exit 1; }
+        env:
+          WRANGLER_SEND_METRICS: 'false'

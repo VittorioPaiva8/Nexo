@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import bcrypt from 'bcrypt';
 import { dataDoDia, hojeBrasilia, somarDias } from '../src/common/datas.js';
 import { cnpjValido } from '../src/common/documentos.js';
+import { gerarHashSenha } from '../src/common/senha.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import type { Perfil, Prioridade, StatusDivergencia } from '../src/generated/prisma/enums.js';
 
@@ -232,7 +232,7 @@ async function main() {
   }
   await prisma.tipoDivergencia.upsert({ where: { nome: 'Outro' }, update: {}, create: { nome: 'Outro' } });
 
-  const senhaHash = await bcrypt.hash(process.env['SEED_SENHA'] ?? 'nexo123', 10);
+  const senhaHash = await gerarHashSenha(process.env['SEED_SENHA'] ?? 'nexo123');
   for (const u of USUARIOS) {
     const setor = u.setor ? await prisma.setor.findUnique({ where: { nome: u.setor } }) : null;
     await prisma.usuario.upsert({

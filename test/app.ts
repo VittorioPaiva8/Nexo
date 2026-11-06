@@ -2,11 +2,11 @@ import 'dotenv/config';
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module.js';
 import type { Perfil } from '../src/generated/prisma/enums.js';
 import { configurarApp } from '../src/configurar-app.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { gerarHashSenha } from '../src/common/senha.js';
 
 process.env['DATABASE_URL'] = process.env['DATABASE_URL_TESTE'];
 process.env['JWT_SECRET'] ??= 'segredo-de-teste';
@@ -26,7 +26,7 @@ export async function prepararBanco(prisma: PrismaService) {
       nexo."Atribuicao", nexo."Divergencia", nexo."SequenciaProtocolo", nexo."NotaFiscal",
       nexo."Importacao", nexo."Usuario", nexo."TipoDivergencia", nexo."Setor" RESTART IDENTITY CASCADE`,
   );
-  const senhaHash = await bcrypt.hash('senha123', 4);
+  const senhaHash = await gerarHashSenha('senha123', 1000);
   const fiscal = await prisma.setor.create({ data: { nome: 'Fiscal' } });
   const suprimentos = await prisma.setor.create({ data: { nome: 'Suprimentos', slaDias: 2 } });
   const financeiro = await prisma.setor.create({ data: { nome: 'Financeiro' } });

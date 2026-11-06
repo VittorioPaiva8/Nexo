@@ -1,11 +1,9 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
-import bcrypt from 'bcrypt';
 import { Prisma } from '../generated/prisma/client.js';
+import { gerarHashSenha } from '../common/senha.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { AtualizarUsuarioDto, CriarUsuarioDto, FiltroUsuariosDto } from './dto/usuario.dto.js';
 import { usuarioPublico } from './usuario-publico.js';
-
-const RODADAS_BCRYPT = 10;
 
 @Injectable()
 export class UsuariosService {
@@ -36,7 +34,7 @@ export class UsuariosService {
     if (dto.perfil === 'TRATADOR' && !dto.setorId) {
       throw new BadRequestException('Tratadores precisam estar vinculados a um setor');
     }
-    const senhaHash = await bcrypt.hash(dto.senha, RODADAS_BCRYPT);
+    const senhaHash = await gerarHashSenha(dto.senha);
     return this.salvar(() =>
       this.prisma.usuario.create({
         data: {
@@ -52,7 +50,7 @@ export class UsuariosService {
   }
 
   async atualizar(id: number, dto: AtualizarUsuarioDto) {
-    const senhaHash = dto.senha ? await bcrypt.hash(dto.senha, RODADAS_BCRYPT) : undefined;
+    const senhaHash = dto.senha ? await gerarHashSenha(dto.senha) : undefined;
     return this.salvar(() =>
       this.prisma.usuario.update({
         where: { id },
