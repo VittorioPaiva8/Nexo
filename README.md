@@ -90,17 +90,17 @@ Usuários do seed (senha `nexo123`, ou o valor de `SEED_SENHA`): `admin@nexo.loc
 
 ## Publicação (ambiente de teste)
 
-O ambiente de teste roda no **Cloudflare**, num único endereço: o frontend é servido como arquivos estáticos e a API roda em **Cloudflare Containers**, acessada em `/api`. O banco é um PostgreSQL gratuito no **Neon**. Isso é uma exceção ao guia ITAX (que prevê Fly.io para API e banco), aprovada só para o teste. O `Dockerfile` é o mesmo nos dois casos.
+O ambiente de teste roda no **Cloudflare**, num único endereço: o frontend é servido como arquivos estáticos e a API roda em **Cloudflare Containers**, acessada em `/api`. O banco é um PostgreSQL gratuito no **Supabase**. Isso é uma exceção ao guia ITAX (que prevê Fly.io para API e banco), aprovada só para o teste. O `Dockerfile` é o mesmo nos dois casos.
 
-O workflow `.github/workflows/publicar.yml` roda a cada push na `main` (ou manualmente em Actions → Publicar): aplica as migrações no Neon, carrega o seed, gera o frontend e publica com `wrangler deploy` (`wrangler.jsonc` e `cloudflare/worker.ts`).
+O workflow `.github/workflows/publicar.yml` roda a cada push na `main` (ou manualmente em Actions → Publicar): aplica as migrações no Supabase, carrega o seed, gera o frontend e publica com `wrangler deploy` (`wrangler.jsonc` e `cloudflare/worker.ts`).
 
 Segredos do repositório (Settings → Secrets and variables → Actions):
 
-| Nome                    | Onde conseguir                                                                                              |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Cloudflare → My Profile → API Tokens → modelo _Edit Cloudflare Workers_                                     |
-| `CLOUDFLARE_ACCOUNT_ID` | Painel da Cloudflare, na página inicial da conta                                                            |
-| `DATABASE_URL`          | Neon → projeto → Connect, com _Connection pooling_ desligado (conexão direta, termina em `sslmode=require`) |
+| Nome                    | Onde conseguir                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare → My Profile → API Tokens → modelo _Edit Cloudflare Workers_                          |
+| `CLOUDFLARE_ACCOUNT_ID` | Painel da Cloudflare, na página inicial da conta                                                 |
+| `DATABASE_URL`          | Supabase → Connect → _Session pooler_ (porta 5432, funciona em IPv4; a conexão direta é só IPv6) |
 
 Requisitos: plano Workers Paid na Cloudflare (necessário para Containers). O container desliga após 15 minutos sem uso; o primeiro acesso depois disso leva alguns segundos.
 
