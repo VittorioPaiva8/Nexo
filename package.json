@@ -22,7 +22,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "openapi": "npm run build && node dist/gerar-openapi.js",
+    "openapi": "npm run build && node dist/gerar-openapi.js && prettier --write docs/nexo-openapi.yml",
     "postinstall": "prisma generate"
   },
   "dependencies": {
